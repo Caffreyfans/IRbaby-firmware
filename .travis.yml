@@ -26,4 +26,4 @@ before_deploy:
   file: .pio/build/esp12e/firmware.bin
   skip_cleanup: true
   on:
-    tags: false
+    tags: true
