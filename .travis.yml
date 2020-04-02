@@ -13,11 +13,11 @@ install:
 
 script:
   - platformio run
+  - ls -a
 
 before_deploy:
   - git config --global user.name "Caffreyfans"
   - git config --global user.email "Caffreyfans@163.com"
-  - ls 
   - ls .pio/build/esp12e
   # - mv firmware/*/*.bin firmware/
 deploy:
