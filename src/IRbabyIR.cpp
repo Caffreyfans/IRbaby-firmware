@@ -12,7 +12,8 @@
 
 void downLoadFile(String file) {
     HTTPClient http_client;
-    String download_url = DOWNLOAD_PREFIX + file + DOWNLOAD_SUFFIX;
+    String download_url = DOWNLOAD_PREFIX;
+    download_url += file + DOWNLOAD_SUFFIX;
     String save_path = SAVE_PATH + file;
     File cache = SPIFFS.open(save_path, "w");
     if (cache) {
