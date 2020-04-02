@@ -17,7 +17,8 @@ script:
 before_deploy:
   - git config --global user.name "Caffreyfans"
   - git config --global user.email "Caffreyfans@163.com"
-  - ls -a
+  - ls 
+  - ls .pio/build/esp12e
   # - mv firmware/*/*.bin firmware/
 deploy:
   provider: releases
