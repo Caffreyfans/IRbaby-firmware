@@ -18,7 +18,7 @@ before_deploy:
   - git config --global user.name "Caffreyfans"
   - git config --global user.email "Caffreyfans@163.com"
   - ls -a
-  - mv firmware/*/*.bin firmware/
+  # - mv firmware/*/*.bin firmware/
 deploy:
   provider: releases
   file_glob: true
