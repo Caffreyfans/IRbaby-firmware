@@ -18,7 +18,7 @@ before_deploy:
   - git config --global user.name "Caffreyfans"
   - git config --global user.email "Caffreyfans@163.com"
 
-  deploy:
+deploy:
   provider: releases
   api_key:
     secure: q+V3ixBe1GJUwkX7dkjek/X8H9lCjkLVgh+BeXD2rOIJe2naB3u4q9LHWFElfh0za+9Bcz1dqyRVcLlbjKpZI0yXcVoNhvd8rlmiFs9Y8l47citaiB+c0vZuZ0afIEBnDnzgDeXSWyF97LmUy9z43A/JkjtyWFxxnVNLjLD2QrqPyFRaVDim8ihXZsxZLgEuHTd1a8nLmaUj1tfWK1A0Ozy5vQqc7PWl6cUj6t6DZw5+FmTAr9j6VYfQvLVfqPlAPicRq4Nn+XqU+Uqlem8f4nE7G301OCw2Kaa6o0tPAAfZ2XF30vu//CE22DudU2yqA2d0utHgDggDACRtwmA9+Fel2Cd7owGxUoAIIBsTEnQEiGMLrYgSOD2NVSfl/By4H2/zzw0ULJyUWGESJymN+H/CJbl1UmPxZw5QemUh8S6KvbzGL379cJYLOlhoupaH7lxH/ImLu3VL5ksSNH2elSBvMu7mFP7SAVe9M6SO+d8HfSW7jKm0H1M9sVoddAzbVpzSxt1qiJTccmn66O7ANHeSYq8HHOeDiewe+Oy2vk5iZomiokBg1ymlcw9ed3GlgB3HG1/DZk90wVgzBMvduG9hcZbf8yJS5kAx/fbU9ISd22KBuWEukOkDCorwbbKUVTpFYdvjnDvkkc0KAiKwBcqfO8qrsfG9cC4F5jBEeQA=
