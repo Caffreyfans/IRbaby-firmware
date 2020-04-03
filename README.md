@@ -1,9 +1,10 @@
 # IRbaby-Firmware
-## 编译状态
+## Build State
 [![Build Status](https://www.travis-ci.org/Caffreyfans/IRbaby-firmware.svg?branch=master)](https://www.travis-ci.org/Caffreyfans/IRbaby-firmware)
 
-[English doc](README_en.md)
-## 特性
+[English doc](README.md) | [中文文档](README_zh.md)
+
+## Feature
 - [ ] OTA
 - [x] MQTT
 - [x] UDP
