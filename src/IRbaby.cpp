@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include <WiFiManager.h>
+#include "WiFiManager.h"
 #include <ESP8266httpUpdate.h>
 #include "IRbabyUDP.h"
 #include "IRbabyOTA.h"
@@ -8,12 +8,16 @@
 #include "IRbabySerial.h"
 #include "IRbabyMsgHandler.h"
 #include "IRbabyUserSettings.h"
+#include "ESP8266HTTPClient.h"
 
-const byte reset_pin = D7; // 复位键
+
+const byte reset_pin = D6; // 复位键
 void ICACHE_RAM_ATTR resetHandle(); // 中断函数
 WiFiManager wifi_manager;
 uint32_t last_system_time = millis();
 uint32_t system_time;
+
+void registerDevice();
 
 void setup()
 {
@@ -38,6 +42,8 @@ void setup()
 
     udpInit();  // udp 初始化
     mqttInit(); // mqtt 初始化
+
+    registerDevice();
 }
 
 void loop()
@@ -90,4 +96,34 @@ void resetHandle()
     {
         settingsClear();
     }
+}
+
+void registerDevice() {
+    HTTPClient http;
+    String head = "http://api.ipify.org/?format=json";
+    http.begin(head);
+    int http_code = http.GET();
+    DEBUGF("[HTTP] GET... code: %d\n", http_code);
+    String ip = http.getString();
+    StaticJsonDocument<128> ip_json;
+    deserializeJson(ip_json, ip);
+    JsonObject ip_obj = ip_json.as<JsonObject>();
+    http.end();
+    HTTPClient http2;
+    StaticJsonDocument<128> body_json;
+    String chip_id = String(ESP.getChipId(), HEX);
+    chip_id.toUpperCase();
+    head = "http://playground.devicehive.com/api/rest/device/";
+    head += chip_id;
+    http2.begin(head);
+    http2.addHeader("Content-Type", "application/json");
+    http2.addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJwYXlsb2FkIjp7ImEiOlsyLDMsNCw1LDYsNyw4LDksMTAsMTEsMTIsMTUsMTYsMTddLCJlIjoxNzQzNDM2ODAwMDAwLCJ0IjoxLCJ1Ijo2NjM1LCJuIjpbIjY1NDIiXSwiZHQiOlsiKiJdfX0.WyyxNr2OD5pvBSxMq84NZh6TkNnFZe_PXenkrUkRSiw");
+    body_json["name"] = chip_id;
+    body_json["networkId"] = "6542";
+    body_json["data"] = ip_obj;
+    String body = body_json.as<String>();
+    DEBUGLN(body);
+    http_code = http2.PUT(body);
+    http2.end();
+    DEBUGF("[HTTP] PUT... code: %d\n", http_code);    
 }

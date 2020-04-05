@@ -2,6 +2,7 @@
 #include "IRbabyUserSettings.h"
 #include "IRbabySerial.h"
 #include "IRbabyMQTT.h"
+#include "WiFiManager.h"
 
 #define FIRMWARE_VERSION 0.1
 StaticJsonDocument<1024> ConfigData;
@@ -79,6 +80,8 @@ bool settingsLoad()
 void settingsClear()
 {
     DEBUGLN("Reset settings");
+    WiFiManager wifi_manager;
+    wifi_manager.resetSettings();
     SPIFFS.format();
     ESP.reset();
 }
