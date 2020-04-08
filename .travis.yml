@@ -18,7 +18,7 @@ before_deploy:
   - git config --global user.name "Caffreyfans"
   - git config --global user.email "Caffreyfans@163.com"
   - mkdir tmp && cd tmp
-  - cp .pio/build/esp12e/firmware.bin IRbaby.bin
+  - cp ../.pio/build/esp12e/firmware.bin IRbaby.bin
   - wget caffreyfans.top/download/FlashESP8266.exe
   - wget caffreyfans.top/download/esptool.exe
   - zip -q IRbaby.zip *
