@@ -27,7 +27,7 @@ void versionCheck()
 {
 }
 
-void otaUpdate()
+void otaUpdate(String url)
 {
 
     WiFiClient client;
@@ -38,7 +38,7 @@ void otaUpdate()
     ESPhttpUpdate.onProgress(update_progress);
     ESPhttpUpdate.onError(update_error);
 
-    t_httpUpdate_return ret = ESPhttpUpdate.update(client, "http://caffreyfans.top/IRbaby/latest/firmware.bin");
+    t_httpUpdate_return ret = ESPhttpUpdate.update(client, url);
 
     switch (ret)
     {

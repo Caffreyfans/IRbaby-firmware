@@ -3,6 +3,6 @@
 
 #include "IRbabySerial.h"
 
-void otaUpdate();
+void otaUpdate(String url);
 
 #endif

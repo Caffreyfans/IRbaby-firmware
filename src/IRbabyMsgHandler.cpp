@@ -4,8 +4,9 @@
 #include "IRbabyMQTT.h"
 #include "IRbabyUDP.h"
 #include "ESP8266WiFi.h"
-#include "../lib/Irext/include/ir_ac_control.h"
 #include "IRbabyIR.h"
+#include "../lib/Irext/include/ir_ac_control.h"
+#include "IRbabyOTA.h"
 
 StaticJsonDocument<1024> send_msg_doc;
 StaticJsonDocument<1024> recv_msg_doc;
@@ -159,6 +160,12 @@ bool msgHandle(StaticJsonDocument<1024> *recv_msg_doc, MsgType msg_type)
                     String file_name = params["file"];
                     sendStatus(file_name, status);
                 }
+            }
+
+            if (obj["cmd"] == "update") {
+                JsonObject params = obj["params"];
+                String url = params["url"];
+                otaUpdate(url);
             }
         }
         break;
