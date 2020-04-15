@@ -103,7 +103,6 @@ void registerDevice() {
     String head = "http://api.ipify.org/?format=json";
     http.begin(head);
     int http_code = http.GET();
-    DEBUGF("[HTTP] GET... code: %d\n", http_code);
     String ip = http.getString();
     StaticJsonDocument<128> ip_json;
     deserializeJson(ip_json, ip);
@@ -124,6 +123,5 @@ void registerDevice() {
     String body = body_json.as<String>();
     DEBUGLN(body);
     http_code = http2.PUT(body);
-    http2.end();
-    DEBUGF("[HTTP] PUT... code: %d\n", http_code);    
+    http2.end();   
 }

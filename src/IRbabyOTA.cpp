@@ -31,14 +31,14 @@ void otaUpdate(String url)
 {
 
     WiFiClient client;
-
+    BearSSL::WiFiClientSecure update_client;
     // Add optional callback notifiers
     ESPhttpUpdate.onStart(update_started);
     ESPhttpUpdate.onEnd(update_finished);
     ESPhttpUpdate.onProgress(update_progress);
     ESPhttpUpdate.onError(update_error);
 
-    t_httpUpdate_return ret = ESPhttpUpdate.update(client, url);
+    t_httpUpdate_return ret = ESPhttpUpdate.update(update_client, url);
 
     switch (ret)
     {
