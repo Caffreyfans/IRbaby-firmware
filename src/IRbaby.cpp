@@ -10,7 +10,6 @@
 #include "IRbabyUserSettings.h"
 #include "ESP8266HTTPClient.h"
 
-
 const byte reset_pin = D6; // 复位键
 void ICACHE_RAM_ATTR resetHandle(); // 中断函数
 WiFiManager wifi_manager;

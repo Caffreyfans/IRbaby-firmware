@@ -4,7 +4,7 @@
 #include "IRbabyMQTT.h"
 #include "WiFiManager.h"
 
-#define FIRMWARE_VERSION 0.1
+#define FIRMWARE_VERSION 0.2
 StaticJsonDocument<1024> ConfigData;
 IRsend* ir_send = new IRsend(0);
 

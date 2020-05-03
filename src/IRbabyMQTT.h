@@ -20,4 +20,8 @@ bool mqttConnected();
 
 /* MQTT 接收循环 */
 void mqttLoop();
-#endif
+
+/* MQTT 信息发送 */
+void mqttPublish(String topic, String payload);
+
+#endif // IRBABY_MQTT_H

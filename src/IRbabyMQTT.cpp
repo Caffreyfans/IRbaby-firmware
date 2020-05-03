@@ -18,6 +18,9 @@ void mqttInit()
     mqtt_client.setCallback(callback);
 }
 
+/**************************************
+ * sub example: /IRbaby/chip_id/set/#
+ **************************************/
 bool mqttReconnect()
 {
     bool flag = false;
@@ -34,9 +37,11 @@ bool mqttReconnect()
             String chip_id = String(ESP.getChipId(), HEX);
             chip_id.toUpperCase();
             DEBUGF("Trying to connect %s:%d\n", host, port);
-            if (mqtt_client.connect(chip_id.c_str(), user, password))
+            if (mqtt_client.connect(chip_id.c_str(), user,
+                password))
             {
-                String sub_topic = String("/IRbaby/") + chip_id + String("/#");
+                String sub_topic = String("/IRbaby/") + 
+                    chip_id + "/set" + String("/#");
                 DEBUGF("MQTT subscribe %s\n", sub_topic.c_str());
                 mqtt_client.subscribe(sub_topic.c_str());
                 flag = true;
@@ -71,7 +76,7 @@ void callback(char *topic, byte *payload, unsigned int length)
         switch (index++)
         {
         case 0:
-            recv_msg_doc["params"]["set"] = tmp;
+            recv_msg_doc["params"]["cmd"] = tmp;
             break;
         case 1:
             recv_msg_doc["params"]["file"] = tmp;
@@ -92,4 +97,9 @@ bool mqttConnected()
 void mqttLoop()
 {
     mqtt_client.loop();
+}
+
+void mqttPublish(String topic, String payload)
+{
+    mqtt_client.publish(topic.c_str(), payload.c_str());
 }

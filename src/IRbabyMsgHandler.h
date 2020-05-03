@@ -10,7 +10,7 @@ typedef enum msgtype
     udp
 } MsgType;
 
-bool msgHandle(StaticJsonDocument<1024> *recv_msg_doc, MsgType msg_type);
+bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type);
 
 extern StaticJsonDocument<1024> recv_msg_doc;
 #endif

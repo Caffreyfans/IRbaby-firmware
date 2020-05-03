@@ -10,63 +10,25 @@
 
 StaticJsonDocument<1024> send_msg_doc;
 StaticJsonDocument<1024> recv_msg_doc;
-StaticJsonDocument<1024> ac_status_doc;
 
-void initAC(String file);
-t_remote_ac_status loadAC(String file);
-void saveAC(String file, t_remote_ac_status status);
+void sendState(String file, t_remote_ac_status status);
 
-void initAC(String file) {
-    ac_status_doc[file]["power"] = 0;
-    ac_status_doc[file]["temperature"] = 8;
-    ac_status_doc[file]["mode"] = 2;
-    ac_status_doc[file]["swing"] = 0;
-    ac_status_doc[file]["speed"] = 0;
-}
-
-t_remote_ac_status loadAC(String file) {
-    t_remote_ac_status status;
-    int power = ac_status_doc[file]["power"];
-    int temperature = ac_status_doc[file]["temperature"];
-    int mode = ac_status_doc[file]["mode"];
-    int swing = ac_status_doc[file]["swing"];
-    int wind_speed = ac_status_doc[file]["speed"];
-    status.ac_power = (t_ac_power)power;
-    status.ac_temp = (t_ac_temperature)temperature;
-    status.ac_mode = (t_ac_mode)mode;
-    status.ac_swing = (t_ac_swing)swing;
-    status.ac_wind_speed = (t_ac_wind_speed)wind_speed;
-    return status;
-}
-
-void saveAC(String file, t_remote_ac_status status) {
-    ac_status_doc[file]["power"] = status.ac_power;
-    ac_status_doc[file]["temperature"] = status.ac_temp;
-    ac_status_doc[file]["mode"] = status.ac_mode;
-    ac_status_doc[file]["swing"] = status.ac_swing;
-    ac_status_doc[file]["speed"] = status.ac_wind_speed;
-}
-
-bool msgHandle(StaticJsonDocument<1024> *recv_msg_doc, MsgType msg_type)
+bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
 {
-    serializeJsonPretty(*recv_msg_doc, IRBABY_DEBUG);
+    serializeJsonPretty(*p_recv_msg_doc, IRBABY_DEBUG);
     IRBABY_DEBUG.println();
-    JsonObject obj = recv_msg_doc->as<JsonObject>();
+    JsonObject obj = p_recv_msg_doc->as<JsonObject>();
     switch (msg_type)
     {
         case MsgType::mqtt:
         {
-            String set = obj["params"]["set"];
+            String cmd = obj["params"]["cmd"];
             String file = obj["params"]["file"];
             String var = obj["params"]["var"];
             /* 状态码处理 */
-            if (set.length() > 0) {
-                if (!ac_status_doc.containsKey(file)) {
-                    initAC(file);
-                }
-                t_remote_ac_status ac_stauts = loadAC(file);
-
-                if (set.equals("mode")) {
+            if (cmd.length() > 0) {
+                t_remote_ac_status ac_stauts = getACState(file);
+                if (cmd.equals("mode")) {
                     if (var.equals("off")) {
                         ac_stauts.ac_power = AC_POWER_OFF;
                     } else {
@@ -78,21 +40,33 @@ bool msgHandle(StaticJsonDocument<1024> *recv_msg_doc, MsgType msg_type)
                     if (var.equals("fan")) ac_stauts.ac_mode = (t_ac_mode)3;
                     if (var.equals("dry")) ac_stauts.ac_mode = (t_ac_mode)4;
                 }
-                if (set.equals("temperature")) {
+                if (cmd.equals("temperature")) {
                     ac_stauts.ac_temp = (t_ac_temperature)(var.toInt() - 16);
                 }
-                if (set.equals("fan")) {
+                if (cmd.equals("fan")) {
                     if (var.equals("auto")) ac_stauts.ac_wind_speed = (t_ac_wind_speed)0;
                     if (var.equals("low")) ac_stauts.ac_wind_speed = (t_ac_wind_speed)1;
                     if (var.equals("medium")) ac_stauts.ac_wind_speed = (t_ac_wind_speed)2;
                     if (var.equals("high")) ac_stauts.ac_wind_speed = (t_ac_wind_speed)3;
                 }
-                if (set.equals("swing")) {
+                if (cmd.equals("swing")) {
                     if (var.equals("on")) ac_stauts.ac_swing = (t_ac_swing)0;
                     if (var.equals("off")) ac_stauts.ac_swing = (t_ac_swing)1;
                 }
+                if (cmd.equals("set")) {
+                    StaticJsonDocument<1024> var_doc;
+                    DeserializationError error = deserializeJson(var_doc, var);
+                    if (error)
+                    {
+                        ERRORLN("Failed to parse var message");
+                    }
+                    ac_stauts.ac_power = t_ac_power((int)var_doc["power"]);
+                    ac_stauts.ac_temp = t_ac_temperature((int)var_doc["temperature"]);
+                    ac_stauts.ac_mode = t_ac_mode((int)var_doc["mode"]);
+                    ac_stauts.ac_swing = t_ac_swing((int)var_doc["swing"]);
+                    ac_stauts.ac_wind_speed = t_ac_wind_speed((int)var_doc["speed"]);
+                }
                 sendStatus(file, ac_stauts);
-                saveAC(file, ac_stauts);
             }
         }
         break;
@@ -174,4 +148,23 @@ bool msgHandle(StaticJsonDocument<1024> *recv_msg_doc, MsgType msg_type)
             break;
         }
         return true;
+}
+
+void sendState(String file_name, t_remote_ac_status status)
+{
+    String chip_id = String(ESP.getChipId(), HEX);
+    String topic_head = "/IRbaby/" + chip_id + "/state/" + file_name
+        + "/";
+    String topic = topic_head + "mode";
+    String payload;
+    const char *mode[5] = {"auto", "cool", "test", "a", "b"};
+    int index = (int)status.ac_mode;
+    DEBUGLN("mode is");
+    DEBUGLN(mode[index]);
+    // switch (status.ac_mode) {
+    //     case t_ac_mode::AC_MODE_AUTO: payload = "auto";
+    //     case t_ac_mode::AC_MODE_COOL: payload = "cool";
+    //     case t_ac
+    // }
+    // mqttPublish(topic, )
 }
