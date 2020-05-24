@@ -2,7 +2,7 @@
 #define IRBABY_USER_SETTINGS_H
 #include <ArduinoJson.h>
 #include "IRsend.h"
-
+#include "IRrecv.h"
 /* 初始化配置信息 */
 bool settingsInit();
 
@@ -18,5 +18,6 @@ bool settingsLoad();
 extern StaticJsonDocument<1024> ConfigData;
 
 extern IRsend* ir_send;
+extern IRrecv* ir_recv;
 
 #endif // IRBABY_USER_SETTINGS_H

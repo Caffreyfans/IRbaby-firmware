@@ -2,7 +2,6 @@
 #include "ESP8266HTTPClient.h"
 #include "IRbabySerial.h"
 #include <FS.h>
-#include "IRsend.h"
 #include "IRbabyUserSettings.h"
 
 #define DOWNLOAD_PREFIX "http://irext-debug.oss-cn-hangzhou.aliyuncs.com/irda_"
@@ -10,6 +9,7 @@
 #define SAVE_PATH "/bin/"
 
 StaticJsonDocument<1024> ac_status_doc;
+decode_results results;  // Somewhere to store the results
 
 void initAC(String file);
 void saveAC(String file, t_remote_ac_status status);
@@ -18,6 +18,9 @@ void downLoadFile(String file) {
     HTTPClient http_client;
     String download_url = DOWNLOAD_PREFIX + file + DOWNLOAD_SUFFIX;
     String save_path = SAVE_PATH + file;
+
+
+
     File cache = SPIFFS.open(save_path, "w");
     if (cache) {
         http_client.begin(download_url);
@@ -75,7 +78,42 @@ void sendStatus(String file, t_remote_ac_status status) {
 }
 
 void recvRaw() {
+    if (ir_recv->decode(&results)) {
+        DEBUGF("raw length = %d\n", results.rawlen - 1);
+        for (int i = 1; i < results.rawlen; i++) {
+            IRBABY_DEBUG.printf("%d ", *(results.rawbuf + i) * 2);
+        }
+        IRBABY_DEBUG.println();
+        saveRaw();
+        ir_recv->resume();
+    }    
+}
 
+bool saveRaw() {
+    DEBUGLN("try to save data");
+    File cache = SPIFFS.open("/raw/test", "w");
+    if (!cache)
+    {
+        ERRORLN("Failed to create file");
+        return false;
+    }   
+    cache.write((char *)(results.rawbuf + 1), 2 * (results.rawlen - 1));
+    cache.close();
+    cache = SPIFFS.open("/raw/test", "r");
+    if (!cache) {
+        ERRORLN("Failed to open test");
+        return false;
+    }
+    uint16_t* data_buffer = (uint16_t *)malloc(sizeof(uint16_t) * 512);
+    memset(data_buffer, 0, 512);
+    DEBUGF("\nfile size = %d\n", cache.size());
+    cache.readBytes((char *)data_buffer, cache.size());
+    for (int i = 0; i < cache.size() / 2; i++) {
+        IRBABY_DEBUG.printf("%d ", *(data_buffer + i) * 2);
+    }
+    free(data_buffer);
+    cache.close();
+    return true;
 }
 
 void initAC(String file) {

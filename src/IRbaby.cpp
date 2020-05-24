@@ -1,3 +1,9 @@
+/****************************************
+ * Auther:  Caffreyfans
+ * Date:    2020-05-17
+ * Description: MQTT to IR
+ ***************************************/
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include "WiFiManager.h"
@@ -9,14 +15,16 @@
 #include "IRbabyMsgHandler.h"
 #include "IRbabyUserSettings.h"
 #include "ESP8266HTTPClient.h"
+#include "IRbabyIR.h"
 
-const byte reset_pin = D6; // 复位键
+/* update MAC and IP to the server */
+void registerDevice();
+
+const byte reset_pin = D7; // 复位键
 void ICACHE_RAM_ATTR resetHandle(); // 中断函数
 WiFiManager wifi_manager;
 uint32_t last_system_time = millis();
 uint32_t system_time;
-
-void registerDevice();
 
 void setup()
 {
@@ -47,6 +55,8 @@ void setup()
 
 void loop()
 {
+    // recvRaw(); 
+
     /* UDP 报文接受处理 */
     char *msg = udpRecive();
     if (msg)
@@ -77,7 +87,7 @@ void loop()
     }
 
     /* 接收 MQTT 消息 */
-    mqttLoop();
+    mqttLoop();   
 }
 
 void resetHandle()

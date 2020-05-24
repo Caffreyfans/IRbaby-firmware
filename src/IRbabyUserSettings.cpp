@@ -4,19 +4,32 @@
 #include "IRbabyMQTT.h"
 #include "WiFiManager.h"
 
-#define FIRMWARE_VERSION 0.2
+#define FIRMWARE_VERSION 0.3
 StaticJsonDocument<1024> ConfigData;
-IRsend* ir_send = new IRsend(0);
 
-void loadPin();
+IRsend* ir_send = NULL;
+IRrecv* ir_recv = NULL;
 
 void loadPin() {
     if (ConfigData.containsKey("send_pin")) {
         int pin = ConfigData["send_pin"];
         if (pin > 0) {
-            delete ir_send;
+            if (ir_send != NULL)
+                delete ir_send;
             ir_send = new IRsend(pin);
             ir_send->begin();
+        }
+    }
+    if (ConfigData.containsKey("receive_pin")) {
+        int pin = ConfigData["receive_pin"];
+        if (pin > 0) {
+            if (ir_recv != NULL)
+                delete ir_recv;
+            const uint8_t kTimeout = 50;
+            const uint16_t kCaptureBufferSize = 1024;
+            ir_recv = new IRrecv(pin, kCaptureBufferSize, kTimeout, true);
+            ir_recv->enableIRIn();
+            DEBUGF("load recv pin %d\n", pin);
         }
     }
 }
@@ -67,8 +80,8 @@ bool settingsLoad()
                 return false;
             }
             DEBUGLN("Load config data:");
-            serializeJsonPretty(ConfigData, IRBABY_DEBUG);
             ConfigData["version"] = FIRMWARE_VERSION;
+            serializeJsonPretty(ConfigData, IRBABY_DEBUG);
             DEBUGLN();
         }
         cache.close();
