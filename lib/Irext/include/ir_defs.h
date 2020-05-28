@@ -12,8 +12,8 @@ Revision log:
 #ifndef _IR_DEFS_H
 #define _IR_DEFS_H
 
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
-#pragma ide diagnostic ignored "OCUnusedMacroInspection"
+// #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+// #pragma ide diagnostic ignored "OCUnusedMacroInspection"
 
 #ifdef __cplusplus
 extern "C"

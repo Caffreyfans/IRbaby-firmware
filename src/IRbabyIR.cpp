@@ -23,7 +23,8 @@ void downLoadFile(String file) {
 
     File cache = SPIFFS.open(save_path, "w");
     if (cache) {
-        http_client.begin(download_url);
+        WiFiClient wifi_client;
+        http_client.begin(wifi_client, download_url);
         if (HTTP_CODE_OK == http_client.GET()) {
             DEBUGF("Download %s success\n", file.c_str());
             http_client.writeToStream(&cache);
@@ -84,6 +85,7 @@ void recvRaw() {
             IRBABY_DEBUG.printf("%d ", *(results.rawbuf + i) * 2);
         }
         IRBABY_DEBUG.println();
+        
         saveRaw();
         ir_recv->resume();
     }    
@@ -108,7 +110,7 @@ bool saveRaw() {
     memset(data_buffer, 0, 512);
     DEBUGF("\nfile size = %d\n", cache.size());
     cache.readBytes((char *)data_buffer, cache.size());
-    for (int i = 0; i < cache.size() / 2; i++) {
+    for (size_t i = 0; i < cache.size() / 2; i++) {
         IRBABY_DEBUG.printf("%d ", *(data_buffer + i) * 2);
     }
     free(data_buffer);

@@ -12,7 +12,7 @@ Revision log:
 #ifndef _IR_UTILS_H_
 #define _IR_UTILS_H_
 
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+// #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 #ifdef __cplusplus
 extern "C"

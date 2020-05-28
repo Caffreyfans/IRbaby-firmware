@@ -11,7 +11,7 @@ Revision log:
 #ifndef _IR_DECODER_IR_AC_CONTROL_H
 #define _IR_DECODER_IR_AC_CONTROL_H
 
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+// #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 #ifdef __cplusplus
 extern "C"
