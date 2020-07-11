@@ -1,10 +1,16 @@
 #ifndef IRBABY_GLOBAL_H
 #define IRBABY_GLOBAL_H
 
-typedef unsigned int   uint32_t;
-typedef int            int32_t;
-typedef unsigned short uint16_t;
-typedef short          int16_t;
-typedef unsigned char  uint8_t;
+#include <ArduinoJson.h>
+#include <WiFiManager.h>
+#include <WiFiClient.h>
+/* goable json variable */
+extern StaticJsonDocument<1024> recv_msg_doc;
+extern StaticJsonDocument<1024> send_msg_doc;
+extern StaticJsonDocument<1024> udp_msg_doc;
+extern StaticJsonDocument<1024> mqtt_msg_doc;
+
+extern WiFiManager wifi_manager;
+extern WiFiClient wifi_client;
 
 #endif // IRBABY_GLOBAL_H

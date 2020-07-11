@@ -8,9 +8,6 @@ Description:    This file provides algorithms for forbidden area of AC code
 Revision log:
 * 2016-10-05: created by strawmanbobi
 **************************************************************************************/
-
-#pragma ide diagnostic ignored "readability-redundant-declaration"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

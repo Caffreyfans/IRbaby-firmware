@@ -1,14 +1,13 @@
-#include <FS.h>
 #include "IRbabyUserSettings.h"
 #include "IRbabySerial.h"
 #include "IRbabyMQTT.h"
 #include "WiFiManager.h"
-
-#define FIRMWARE_VERSION 0.3
+#include "IRbabyGlobal.h"
+#include "IRbabyIR.h"
+#include "defines.h"
+#include <LittleFS.h>
 StaticJsonDocument<1024> ConfigData;
-
-IRsend* ir_send = NULL;
-IRrecv* ir_recv = NULL;
+StaticJsonDocument<1024> ACStatus;
 
 void loadPin() {
     if (ConfigData.containsKey("send_pin")) {
@@ -18,6 +17,7 @@ void loadPin() {
                 delete ir_send;
             ir_send = new IRsend(pin);
             ir_send->begin();
+            INFOF("Init gpio %d as IR send pin\n", pin);
         }
     }
     if (ConfigData.containsKey("receive_pin")) {
@@ -29,20 +29,16 @@ void loadPin() {
             const uint16_t kCaptureBufferSize = 1024;
             ir_recv = new IRrecv(pin, kCaptureBufferSize, kTimeout, true);
             ir_recv->enableIRIn();
-            DEBUGF("load recv pin %d\n", pin);
+            INFOF("Init gpio %d as IR receive pin\n", pin);
         }
     }
-}
-bool settingsInit()
-{
-    return SPIFFS.begin();
 }
 
 bool settingsSave()
 {
     DEBUGLN("Save Config");
-    serializeJsonPretty(ConfigData, IRBABY_DEBUG);
-    File cache = SPIFFS.open("/config", "w");
+    serializeJsonPretty(ConfigData, Serial);
+    File cache = LittleFS.open("/config", "w");
     if (!cache)
     {
         ERRORLN("ERROR: Failed to create file");
@@ -63,38 +59,53 @@ bool settingsSave()
 
 bool settingsLoad()
 {
-    if (SPIFFS.exists("/config"))
-    {
-        File cache = SPIFFS.open("/config", "r");
-        if (!cache)
-        {
-            ERRORLN("Failed to read file");
-            return false;
+    LittleFS.begin();
+
+    int ret = false;
+    if (LittleFS.exists("/config")) {
+        File cache = LittleFS.open("/config", "r");
+        if (!cache) {
+            ERRORLN("Failed to read config file");
+            return ret;
         }
-        if (cache.size() > 0)
-        {
+        if (cache.size() > 0) {
             DeserializationError error = deserializeJson(ConfigData, cache);
-            if (error)
-            {
-                ERRORLN("Failed to load settings");
-                return false;
+            if (error) {
+                ERRORLN("Failed to load config settings");
+                return ret;
             }
-            DEBUGLN("Load config data:");
+            INFOLN("Load config data:");
             ConfigData["version"] = FIRMWARE_VERSION;
-            serializeJsonPretty(ConfigData, IRBABY_DEBUG);
-            DEBUGLN();
+            serializeJsonPretty(ConfigData, Serial);
+            Serial.println();
         }
         cache.close();
         loadPin();
+        
     }
-    return true;
+
+    // if (LittleFS.exists("/acstatus")) {
+    //     File cache = LittleFS.open("/acstatus", "r");
+    //     if (!cache) {
+    //         ERRORLN("Failed to read acstatus file");
+    //         return ret;
+    //     }
+    //     if (cache.size() > 0) {
+    //         DeserializationError error = deserializeJson(ACStatus, cache);
+    //         if (error) {
+    //             ERRORLN("Failed to load acstatus settings");
+    //             return ret;
+    //         }
+    //     }
+    // }
+    ret = true;
+    return ret;
 }
 
 void settingsClear()
 {
-    DEBUGLN("Reset settings");
-    WiFiManager wifi_manager;
+    DEBUGLN("\nReset settings");
     wifi_manager.resetSettings();
-    SPIFFS.format();
+    LittleFS.format();
     ESP.reset();
 }

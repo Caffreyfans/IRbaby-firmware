@@ -8,9 +8,6 @@ Description:    This file provides methods for AC IR applying functionalities
 Revision log:
 * 2016-10-12: created by strawmanbobi
 **************************************************************************************/
-#pragma ide diagnostic ignored "bugprone-branch-clone"
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
-
 #include "include/ir_utils.h"
 #include "include/ir_ac_apply.h"
 

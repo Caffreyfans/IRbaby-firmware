@@ -3,91 +3,67 @@
  * Date:    2020-05-17
  * Description: MQTT to IR
  ***************************************/
-
+#include <Ticker.h>
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include "WiFiManager.h"
-#include <ESP8266httpUpdate.h>
+#include <ESP8266HTTPClient.h>
+#include "IRbabyIR.h"
 #include "IRbabyUDP.h"
 #include "IRbabyOTA.h"
 #include "IRbabyMQTT.h"
-#include "IRbabySerial.h"
 #include "IRbabyMsgHandler.h"
+#include "defines.h"
+#include "IRbabyGlobal.h"
 #include "IRbabyUserSettings.h"
-#include "ESP8266HTTPClient.h"
-#include "IRbabyIR.h"
 
-/* update MAC and IP to the server */
-void registerDevice();
-
-const byte reset_pin = D7; // 复位键
-void ICACHE_RAM_ATTR resetHandle(); // 中断函数
-WiFiManager wifi_manager;
-uint32_t last_system_time = millis();
-uint32_t system_time;
-
+void registerDevice();              // device info upload to devicehive
+void ICACHE_RAM_ATTR resetHandle(); // interrupt handle
+Ticker mqtt_check;                  // MQTT check timer
 void setup()
 {
-    Serial.begin(115200);
-    pinMode(reset_pin, INPUT_PULLUP);
-    digitalWrite(reset_pin, HIGH);
-    attachInterrupt(digitalPinToInterrupt(reset_pin), resetHandle, ONLOW);
-    LOGLN();
-    LOGLN();
-    LOGLN(" ___________ _           _           ");
-    LOGLN("|_   _| ___ \\ |         | |          ");
-    LOGLN("  | | | |_/ / |__   __ _| |__  _   _ ");
-    LOGLN("  | | |    /| '_ \\ / _` | '_ \\| | | |");
-    LOGLN(" _| |_| |\\ \\| |_) | (_| | |_) | |_| |");
-    LOGLN(" \\___/\\_| \\_|_.__/ \\__,_|_.__/ \\__, |");
-    LOGLN("                                __/ |");
-    LOGLN("                               |___/ ");
+    if (LOG_DEBUG || LOG_ERROR || LOG_INFO)
+        Serial.begin(BAUD_RATE);
+    pinMode(RESET_PIN, INPUT_PULLUP);
+    digitalWrite(RESET_PIN, HIGH);
+    attachInterrupt(digitalPinToInterrupt(RESET_PIN), resetHandle, ONLOW);
+    INFOLN();
+    INFOLN(
+        " ___________ _           _           \n"
+        "|_   _| ___ \\ |         | |          \n"
+        "  | | | |_/ / |__   __ _| |__  _   _ \n"
+        "  | | |    /| '_ \\ / _` | '_ \\| | | |\n"
+        " _| |_| |\\ \\| |_) | (_| | |_) | |_| |\n"
+        " \\___/\\_| \\_|_.__/ \\__,_|_.__/ \\__, |\n"
+        "                                __/ |\n"
+        "                               |___/ \n");
     wifi_manager.autoConnect();
 
-    SPIFFS.begin(); // 文件管理启动
     settingsLoad(); // 加载配置信息
 
     udpInit();  // udp 初始化
     mqttInit(); // mqtt 初始化
-
     registerDevice();
+
+    mqtt_check.attach_scheduled(MQTT_CHECK_INTERVALS, mqttCheck);
 }
 
 void loop()
 {
-    // recvRaw(); 
+    recvRaw();
 
     /* UDP 报文接受处理 */
     char *msg = udpRecive();
     if (msg)
     {
-        recv_msg_doc.clear();
-        DeserializationError error = deserializeJson(recv_msg_doc, msg);
+        udp_msg_doc.clear();
+        DeserializationError error = deserializeJson(udp_msg_doc, msg);
         if (error)
-        {
             ERRORLN("Failed to parse udp message");
-        }
-        msgHandle(&recv_msg_doc, MsgType::udp);
-    }
-
-    /* MQTT 连接状态检查 */
-    system_time = millis();
-    if (system_time - last_system_time > MQTT_RECONNECT_INTERVAL)
-    {
-        DEBUGLN("Check mqtt connection status");
-        if (!mqttConnected())
-        {
-            DEBUGLN("MQTT disconnect, try to reconnect");
-            mqttDisconnect();
-            mqttReconnect();
-        } else {
-            DEBUGLN("MQTT connected");
-        }
-        last_system_time = system_time;
+        msgHandle(&udp_msg_doc, MsgType::udp);
     }
 
     /* 接收 MQTT 消息 */
-    mqttLoop();   
+    mqttLoop();
+    yield();
 }
 
 void resetHandle()
@@ -107,11 +83,12 @@ void resetHandle()
     }
 }
 
-void registerDevice() {
+void registerDevice()
+{
     HTTPClient http;
     String head = "http://api.ipify.org/?format=json";
-    http.begin(head);
-    int http_code = http.GET();
+    http.begin(wifi_client, head);
+    http.GET();
     String ip = http.getString();
     StaticJsonDocument<128> ip_json;
     deserializeJson(ip_json, ip);
@@ -123,14 +100,14 @@ void registerDevice() {
     chip_id.toUpperCase();
     head = "http://playground.devicehive.com/api/rest/device/";
     head += chip_id;
-    http2.begin(head);
+    http2.begin(wifi_client, head);
     http2.addHeader("Content-Type", "application/json");
     http2.addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJwYXlsb2FkIjp7ImEiOlsyLDMsNCw1LDYsNyw4LDksMTAsMTEsMTIsMTUsMTYsMTddLCJlIjoxNzQzNDM2ODAwMDAwLCJ0IjoxLCJ1Ijo2NjM1LCJuIjpbIjY1NDIiXSwiZHQiOlsiKiJdfX0.WyyxNr2OD5pvBSxMq84NZh6TkNnFZe_PXenkrUkRSiw");
     body_json["name"] = chip_id;
     body_json["networkId"] = "6542";
     body_json["data"] = ip_obj;
     String body = body_json.as<String>();
-    DEBUGLN(body);
-    http_code = http2.PUT(body);
-    http2.end();   
+    INFOF("update %s to devicehive\n", body.c_str());
+    http2.PUT(body);
+    http2.end();
 }

@@ -1,19 +1,17 @@
-#include <ESP8266WiFi.h>
 #include "IRbabyMQTT.h"
 #include "PubSubClient.h"
 #include "IRbabySerial.h"
 #include "ArduinoJson.h"
 #include "IRbabyUserSettings.h"
 #include "IRbabyMsgHandler.h"
-
-WiFiClient wifi_client;
+#include "IRbabyGlobal.h"
 PubSubClient mqtt_client(wifi_client);
 
 void callback(char *topic, byte *payload, unsigned int length);
 
 void mqttInit()
 {
-    DEBUGLN("MQTT Init");
+    INFOLN("MQTT Init");
     mqttReconnect();
     mqtt_client.setCallback(callback);
 }
@@ -47,7 +45,7 @@ bool mqttReconnect()
                 flag = true;
             }
         }
-        DEBUGF("MQTT state rc = %d\n", mqtt_client.state());
+        INFOF("MQTT state rc = %d\n", mqtt_client.state());
     }
     delay(1000);
     return flag;
@@ -60,7 +58,7 @@ void mqttDisconnect()
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-    recv_msg_doc.clear();
+    mqtt_msg_doc.clear();
     String payload_str = "";
     for (uint32_t i = 0; i < length; i++)
     {
@@ -76,17 +74,17 @@ void callback(char *topic, byte *payload, unsigned int length)
         switch (index++)
         {
         case 0:
-            recv_msg_doc["params"]["cmd"] = tmp;
+            mqtt_msg_doc["cmd"] = tmp;
             break;
         case 1:
-            recv_msg_doc["params"]["file"] = tmp;
+            mqtt_msg_doc["params"]["file"] = tmp;
             break;
         default:
             break;
         }
     } while (topic_str.lastIndexOf("/") > 0);
-    recv_msg_doc["params"]["var"] = payload_str;
-    msgHandle(&recv_msg_doc, MsgType::mqtt);
+    mqtt_msg_doc["params"]["status"] = payload_str;
+    msgHandle(&mqtt_msg_doc, MsgType::mqtt);
 }
 
 bool mqttConnected()
@@ -102,4 +100,14 @@ void mqttLoop()
 void mqttPublish(String topic, String payload)
 {
     mqtt_client.publish(topic.c_str(), payload.c_str());
+}
+
+void mqttCheck()
+{
+    if (!mqttConnected())
+    {
+        DEBUGLN("MQTT disconnect, try to reconnect");
+        mqtt_client.disconnect();
+        mqttReconnect();
+    }
 }

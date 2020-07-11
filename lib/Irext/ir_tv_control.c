@@ -9,7 +9,7 @@ Revision log:
 * 2016-10-21: created by strawmanbobi
 **************************************************************************************/
 
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
+// #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 
 #include <string.h>
 

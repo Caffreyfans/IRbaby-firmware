@@ -9,8 +9,6 @@ Revision log:
 * 2016-10-01: created by strawmanbobi
 **************************************************************************************/
 
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
-#pragma ide diagnostic ignored "readability-redundant-declaration"
 
 #include "include/ir_ac_build_frame.h"
 #include "include/ir_decode.h"

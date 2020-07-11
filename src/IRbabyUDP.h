@@ -1,6 +1,5 @@
 #ifndef IRBABY_UDP_H
 #define IRBABY_UDP_H
-#include "IRbabyGlobal.h"
 #include "ArduinoJson.h"
 #include "ESP8266WiFi.h"
 
@@ -9,6 +8,8 @@
 
 void udpInit();
 char* udpRecive();
-uint32_t sendUDP(StaticJsonDocument<1024>* udp_msg_doc, IPAddress ip);
-uint32_t returnUDP(StaticJsonDocument<1024>* udp_msg_doc);
+uint32_t sendUDP(StaticJsonDocument<1024>* doc, IPAddress ip);
+uint32_t returnUDP(StaticJsonDocument<1024>* doc);
+
+extern IPAddress remote_ip;
 #endif // IRBABY_UDP_H

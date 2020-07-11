@@ -550,10 +550,7 @@ INT8 free_ac_context()
     return IR_DECODE_SUCCEEDED;
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 BOOL is_solo_function(UINT8 function_code)
 {
     return (((context->solo_function_mark >> (function_code - 1)) & 0x01) == 0x01) ? TRUE : FALSE;
 }
-#pragma clang diagnostic pop
