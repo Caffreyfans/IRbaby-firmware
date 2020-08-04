@@ -1,4 +1,5 @@
 # IRbaby-Firmware
+
 ## 编译状态
 [![Build Status](https://www.travis-ci.org/Caffreyfans/IRbaby-firmware.svg?branch=master)](https://www.travis-ci.org/Caffreyfans/IRbaby-firmware)
 
@@ -8,6 +9,6 @@
 - [x] OTA
 - [x] MQTT
 - [x] UDP
-- [x] IREXT
+- [x] IRext
 - [x] IRsend
 - [x] IRreceive

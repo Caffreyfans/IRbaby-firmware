@@ -11,8 +11,7 @@ typedef unsigned char uint8_t;
 #define VERSION_CODE 4          // version code
 
 /* reset settings */
-#define RESET_PIN D7 // reset pin
-
+#define RESET_PIN 13 // reset pin
 /* log settings */
 #define BAUD_RATE 115200
 #ifndef LOG_DEBUG

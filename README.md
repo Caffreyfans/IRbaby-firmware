@@ -8,6 +8,6 @@
 - [x] OTA
 - [x] MQTT
 - [x] UDP
-- [x] IREXT
+- [x] IRext
 - [x] IRsend
 - [x] IRreceive

@@ -205,3 +205,46 @@ bool saveAC(String file, t_remote_ac_status status)
     cache.close();
     return ret;
 }
+
+bool sendKey(String file_name, int key)
+{
+    String save_path = SAVE_PATH;
+    save_path += file_name;
+    if (LittleFS.exists(save_path))
+    {
+        File cache = LittleFS.open(save_path, "r");
+        if (cache)
+        {
+            UINT16 content_size = cache.size();
+            DEBUGF("content size = %d\n", content_size);
+
+            if (content_size != 0)
+            {
+                UINT8 *content = (UINT8 *)malloc(content_size * sizeof(UINT8));
+                cache.seek(0L, fs::SeekSet);
+                cache.readBytes((char *)content, content_size);
+                ir_binary_open(2, 1, content, content_size);
+                UINT16 *user_data = (UINT16 *)malloc(1024 * sizeof(UINT16));
+                UINT16 data_length = ir_decode(0, user_data, NULL, FALSE);
+
+                DEBUGF("data_length = %d\n", data_length);
+                if (LOG_DEBUG)
+                {
+                    for (int i = 0; i < data_length; i++)
+                        Serial.printf("%d ", *(user_data + i));
+                    Serial.println();
+                }
+                ir_recv->disableIRIn();
+                ir_send->sendRaw(user_data, data_length, 38);
+                ir_recv->enableIRIn();
+                ir_close();
+                free(user_data);
+                free(content);
+            }
+            else
+                ERRORF("Open %s is empty\n", save_path.c_str());
+        }
+        cache.close();
+    }
+    return true;
+}

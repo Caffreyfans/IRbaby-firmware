@@ -23,8 +23,8 @@ void setup()
     if (LOG_DEBUG || LOG_ERROR || LOG_INFO)
         Serial.begin(BAUD_RATE);
     pinMode(RESET_PIN, INPUT_PULLUP);
-    digitalWrite(RESET_PIN, HIGH);
     attachInterrupt(digitalPinToInterrupt(RESET_PIN), resetHandle, ONLOW);
+    digitalWrite(RESET_PIN, HIGH);
     INFOLN();
     INFOLN(
         " ___________ _           _           \n"
