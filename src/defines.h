@@ -1,3 +1,7 @@
+// IRbaby - github.com/Caffreyfans/IRbaby
+// Copyright Miao Yi 2019-2020
+// MIT License
+
 #ifndef _DEFINES_H
 #define _DEFINES_H
 
@@ -7,11 +11,9 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 typedef unsigned char uint8_t;
 
-#define FIRMWARE_VERSION "v0.4" // version name
-#define VERSION_CODE 4          // version code
+#define FIRMWARE_VERSION "v0.5" // version name
+#define VERSION_CODE 5          // version code
 
-/* reset settings */
-#define RESET_PIN 13 // reset pin
 /* log settings */
 #define BAUD_RATE 115200
 #ifndef LOG_DEBUG
@@ -24,7 +26,36 @@ typedef unsigned char uint8_t;
 #define LOG_ERROR true
 #endif
 
+/* ----------------- user settings ----------------- */
 /* mqtt settings */
-#define MQTT_CHECK_INTERVALS 5       // seconds
+#define MQTT_CHECK_INTERVALS 10      // seconds
 #define MQTT_CONNECT_WAIT_TIME 20000 // MQTT 连接等待时间
+
+/* receive disable */
+#define DISABLE_SIGNAL_INTERVALS 600 // seconds
+
+// uncomment below to enable RF
+#define USE_RF
+
+// uncomment below to enable upload board info to remote server
+#define USE_INFO_UPLOAD
+
+/* ----------------- default pin setting --------------- */
+/* reset pin */
+#define RESET_PIN 2
+
+#ifdef USE_RF
+/* 315 RF pin */
+#define T_315 5
+#define R_315 4
+
+/* 433 RF pin */
+#define T_433 14
+#define R_433 12
 #endif
+
+/* IR pin */
+#define T_IR 15
+#define R_IR 13
+
+#endif  // _DEFINES_H

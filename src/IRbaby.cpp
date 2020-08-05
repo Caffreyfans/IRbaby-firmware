@@ -1,8 +1,26 @@
-/****************************************
- * Auther:  Caffreyfans
- * Date:    2020-05-17
- * Description: MQTT to IR
- ***************************************/
+/**
+ *
+ * Copyright (c) 2020 IRbaby
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <Ticker.h>
 #include <Arduino.h>
 #include <ESP8266HTTPClient.h>
@@ -14,17 +32,20 @@
 #include "defines.h"
 #include "IRbabyGlobal.h"
 #include "IRbabyUserSettings.h"
+#include "IRbabyRF.h"
 
 void registerDevice();              // device info upload to devicehive
 void ICACHE_RAM_ATTR resetHandle(); // interrupt handle
 Ticker mqtt_check;                  // MQTT check timer
+Ticker disable_ir;                  // disable IR receive
+Ticker disable_rf;                  // disable RF receive
+
 void setup()
 {
     if (LOG_DEBUG || LOG_ERROR || LOG_INFO)
         Serial.begin(BAUD_RATE);
     pinMode(RESET_PIN, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(RESET_PIN), resetHandle, ONLOW);
-    digitalWrite(RESET_PIN, HIGH);
     INFOLN();
     INFOLN(
         " ___________ _           _           \n"
@@ -37,23 +58,31 @@ void setup()
         "                               |___/ \n");
     wifi_manager.autoConnect();
 
-    settingsLoad(); // 加载配置信息
+    settingsLoad();  // load user settings form fs
 
-    udpInit();  // udp 初始化
-    mqttInit(); // mqtt 初始化
+    udpInit();  // udp init
+    mqttInit(); // mqtt init
+    initRF();   // RF init
+    loadIRPin(ConfigData["pin"]["ir_send"], ConfigData["pin"]["ir_receive"]);;   // IR init
+#ifdef USE_INFO_UPLOAD
     registerDevice();
-
+#endif
     mqtt_check.attach_scheduled(MQTT_CHECK_INTERVALS, mqttCheck);
+    disable_ir.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableIR);
+    disable_rf.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableRF);
 }
 
 void loop()
 {
-    recvRaw();
+    /* IR receive */
+    recvIR();
 
-    /* UDP 报文接受处理 */
+    /* RF receive */
+    recvRF();
+
+    /* UDP receive and handle */
     char *msg = udpRecive();
-    if (msg)
-    {
+    if (msg) {
         udp_msg_doc.clear();
         DeserializationError error = deserializeJson(udp_msg_doc, msg);
         if (error)
@@ -61,7 +90,7 @@ void loop()
         msgHandle(&udp_msg_doc, MsgType::udp);
     }
 
-    /* 接收 MQTT 消息 */
+    /* mqtt loop */
     mqttLoop();
     yield();
 }
@@ -73,14 +102,10 @@ void resetHandle()
     static unsigned long start_time = millis();
     unsigned long end_time = millis();
     if (interrupt_time - last_interrupt_time > 10)
-    {
         start_time = millis();
-    }
     last_interrupt_time = interrupt_time;
     if (end_time - start_time > 3000)
-    {
         settingsClear();
-    }
 }
 
 void registerDevice()

@@ -9,6 +9,7 @@
 #include "IRbabyOTA.h"
 #include "defines.h"
 #include <LittleFS.h>
+#include "IRbabyRF.h"
 
 void sendState(String file, t_remote_ac_status status);
 
@@ -21,103 +22,13 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
     }
     JsonObject obj = p_recv_msg_doc->as<JsonObject>();
     String cmd = obj["cmd"];
-    switch (msg_type)
-    {
-    case MsgType::mqtt:
-    {
-        String file = obj["params"]["file"];
-        String var = obj["params"]["status"];
-        /* 状态码处理 */
-        if (cmd.length() > 0)
-        {
-            t_remote_ac_status ac_stauts = getACState(file);
-            if (cmd.equals("mode"))
-            {
-                if (var.equals("off"))
-                {
-                    ac_stauts.ac_power = AC_POWER_OFF;
-                }
-                else
-                {
-                    ac_stauts.ac_power = AC_POWER_ON;
-                }
-                if (var.equals("cool"))
-                    ac_stauts.ac_mode = (t_ac_mode)0;
-                if (var.equals("heat"))
-                    ac_stauts.ac_mode = (t_ac_mode)1;
-                if (var.equals("auto"))
-                    ac_stauts.ac_mode = (t_ac_mode)2;
-                if (var.equals("fan"))
-                    ac_stauts.ac_mode = (t_ac_mode)3;
-                if (var.equals("dry"))
-                    ac_stauts.ac_mode = (t_ac_mode)4;
-            }
-            if (cmd.equals("temperature"))
-            {
-                ac_stauts.ac_temp = (t_ac_temperature)(var.toInt() - 16);
-            }
-            if (cmd.equals("fan"))
-            {
-                if (var.equals("auto"))
-                    ac_stauts.ac_wind_speed = (t_ac_wind_speed)0;
-                if (var.equals("low"))
-                    ac_stauts.ac_wind_speed = (t_ac_wind_speed)1;
-                if (var.equals("medium"))
-                    ac_stauts.ac_wind_speed = (t_ac_wind_speed)2;
-                if (var.equals("high"))
-                    ac_stauts.ac_wind_speed = (t_ac_wind_speed)3;
-            }
-            if (cmd.equals("swing"))
-            {
-                if (var.equals("on"))
-                    ac_stauts.ac_swing = (t_ac_swing)0;
-                if (var.equals("off"))
-                    ac_stauts.ac_swing = (t_ac_swing)1;
-            }
-            if (cmd.equals("status"))
-            {
-                StaticJsonDocument<1024> var_doc;
-                DeserializationError error = deserializeJson(var_doc, var);
-                if (error)
-                {
-                    ERRORLN("Failed to parse var message");
-                }
-                ac_stauts.ac_power = t_ac_power((int)var_doc["power"]);
-                ac_stauts.ac_temp = t_ac_temperature((int)var_doc["temperature"]);
-                ac_stauts.ac_mode = t_ac_mode((int)var_doc["mode"]);
-                ac_stauts.ac_swing = t_ac_swing((int)var_doc["swing"]);
-                ac_stauts.ac_wind_speed = t_ac_wind_speed((int)var_doc["speed"]);
-            }
-            if (cmd.equals("raw"))
-            {
-                sendRaw(file);
-            }
-            else
-            {
-                sendStatus(file, ac_stauts);
-            }
-        }
-    }
-    break;
+    JsonObject params = obj["params"];
+    send_msg_doc.clear();
 
-    case MsgType::udp:
+    if (cmd.equalsIgnoreCase("query"))
     {
-        send_msg_doc.clear();
-
-        if (cmd.equals("config"))
-        {
-            JsonObject params = obj["params"];
-            for (JsonPair kv : params)
-            {
-                ConfigData[kv.key()] = kv.value();
-            }
-            send_msg_doc["cmd"] = "return";
-            send_msg_doc["params"]["message"] = "set success";
-            returnUDP(&send_msg_doc);
-            settingsSave();
-        }
-
-        if (cmd.equals("discovery"))
+        String type = params["type"];
+        if (type.equals("discovery"))
         {
             String chip_id = String(ESP.getChipId(), HEX);
             chip_id.toUpperCase();
@@ -148,57 +59,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             remote_ip.fromString(ip);
             sendUDP(&send_msg_doc, remote_ip);
         }
-
-        if (cmd.equals("send"))
-        {
-            JsonObject params = obj["params"];
-            String file_name = params["file"];
-            if (params.containsKey("status"))
-            {
-                JsonObject statusJson = params["status"];
-                t_remote_ac_status status;
-                status.ac_power = t_ac_power((int)statusJson["power"]);
-                status.ac_temp = t_ac_temperature((int)statusJson["temperature"]);
-                status.ac_mode = t_ac_mode((int)statusJson["mode"]);
-                status.ac_swing = t_ac_swing((int)statusJson["swing"]);
-                status.ac_wind_speed = t_ac_wind_speed((int)statusJson["speed"]);
-                status.ac_display = 1;
-                status.ac_timer = 0;
-                status.ac_sleep = 0;
-                sendStatus(file_name, status);
-            }
-            else
-            {
-                sendRaw(file_name);
-            }
-        }
-
-        if (cmd.equals("update"))
-        {
-            JsonObject params = obj["params"];
-            String url = params["url"];
-            otaUpdate(url);
-        }
-
-        if (cmd.equals("record"))
-        {
-            String ip = obj["params"];
-            remote_ip.fromString(ip);
-            ir_recv->enableIRIn();
-        }
-
-        if (cmd.equals("save"))
-        {
-            String file_name = obj["params"]["file"];
-            saveRaw(file_name);
-        }
-
-        if (cmd.equals("reset"))
-        {
-            settingsClear();
-        }
-
-        if (cmd.equals("info"))
+        else if (type.equals("info"))
         {
             String free_mem = String(ESP.getFreeHeap() / 1024) + "KB";
             String chip_id = String(ESP.getChipId(), HEX);
@@ -228,10 +89,174 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             returnUDP(&send_msg_doc);
         }
     }
-    break;
 
-    default:
-        break;
+    if (cmd.equalsIgnoreCase("send"))
+    {
+        String signal = params["signal"];
+        String type = params["type"];
+
+        if (signal.equalsIgnoreCase("ir"))
+        {
+            if (type.equalsIgnoreCase("status"))
+            {
+                String file = params["file"];
+                JsonObject statusJson = params[type];
+                t_remote_ac_status ac_status = getACState(file);
+                ac_status.ac_power = t_ac_power((int)statusJson["power"]);
+                ac_status.ac_temp = t_ac_temperature((int)statusJson["temperature"]);
+                ac_status.ac_mode = t_ac_mode((int)statusJson["mode"]);
+                ac_status.ac_swing = t_ac_swing((int)statusJson["swing"]);
+                ac_status.ac_wind_speed = t_ac_wind_speed((int)statusJson["speed"]);
+                ac_status.ac_display = 1;
+                ac_status.ac_timer = 0;
+                ac_status.ac_sleep = 0;
+                sendStatus(file, ac_status);
+            }
+            else if (type.equalsIgnoreCase("file"))
+            {
+                String file = params["file"];
+                sendIR(file);
+            }
+            else if (type.equalsIgnoreCase("key"))
+            {
+                String file = params["file"];
+            }
+            else if (type.equalsIgnoreCase("data"))
+            {
+            }
+            else if (type.equalsIgnoreCase("local"))
+            {
+                String file = params["file"];
+                JsonObject localobj = params[type];
+                t_remote_ac_status ac_status = getACState(file);
+                if (localobj.containsKey("mode")) {
+                    String mode = localobj["mode"];
+                    if (mode.equalsIgnoreCase("off"))
+                        ac_status.ac_power = AC_POWER_OFF;
+                    else
+                        ac_status.ac_power = AC_POWER_ON;
+
+                    if (mode.equalsIgnoreCase("cool"))
+                        ac_status.ac_mode = AC_MODE_COOL;
+                    else if (mode.equalsIgnoreCase("heat"))
+                        ac_status.ac_mode = AC_MODE_HEAT;
+                    else if (mode.equalsIgnoreCase("auto"))
+                        ac_status.ac_mode = AC_MODE_AUTO;
+                    else if (mode.equalsIgnoreCase("fan"))
+                        ac_status.ac_mode = AC_MODE_FAN;
+                    else if (mode.equalsIgnoreCase("dry"))
+                        ac_status.ac_mode = AC_MODE_DRY;
+                } else if (localobj.containsKey("temperature")) {
+                    String temperature = localobj["temperature"];
+                    ac_status.ac_temp = (t_ac_temperature)(temperature.toInt() - 16);
+                } else if (localobj.containsKey("fan")) {
+                    String fan = localobj["fan"];
+                    if (fan.equalsIgnoreCase("auto"))
+                        ac_status.ac_wind_speed = AC_WS_AUTO;
+                    else if (fan.equalsIgnoreCase("low"))
+                        ac_status.ac_wind_speed = AC_WS_LOW;
+                    else if (fan.equalsIgnoreCase("medium"))
+                        ac_status.ac_wind_speed = AC_WS_MEDIUM;
+                    else if (fan.equalsIgnoreCase("high"))
+                        ac_status.ac_wind_speed = AC_WS_HIGH;
+                } else if (localobj.containsKey("swing")) {
+                    String swing = localobj["swing"];
+                    if (swing.equalsIgnoreCase("on"))
+                        ac_status.ac_swing = AC_SWING_ON;
+                    else if (swing.equalsIgnoreCase("off"))
+                        ac_status.ac_swing = AC_SWING_OFF;
+                }
+                sendStatus(file, ac_status);
+            }
+        }
+        else if (signal.equalsIgnoreCase("rf315"))
+        {
+            RFTYPE rf_type;
+
+            rf_type = RF315;
+            if (type.equalsIgnoreCase("data"))
+            {
+                unsigned long code = params["code"];
+                unsigned int length = params["length"];
+                sendRFData(code, length, rf_type);
+            }
+            else if (type.equalsIgnoreCase("file"))
+            {
+                String file = params["file"];
+                sendRFFile(file);
+            }
+        }
+        else if (signal.equalsIgnoreCase("rf433"))
+        {
+            RFTYPE rf_type;
+            if (type.equalsIgnoreCase("data"))
+            {
+                rf_type = RF433;
+                unsigned long code = params["code"];
+                unsigned int length = params["length"];
+                sendRFData(code, length, rf_type);
+            }
+            else if (type.equalsIgnoreCase("file"))
+            {
+                String file = params["file"];
+                sendRFFile(file);
+            }
+        }
+    }
+
+    if (cmd.equalsIgnoreCase("set"))
+    {
+        String type = params["type"];
+        if (type.equals("update"))
+        {
+            String url = params["url"];
+            otaUpdate(url);
+        }
+
+        else if (type.equals("record"))
+        {
+            String ip = params["ip"];
+            remote_ip.fromString(ip);
+            DEBUGLN("start record");
+            enableIR();
+            enableRF();
+        }
+
+        else if (type.equals("disable_record"))
+        {
+            DEBUGLN("disable record");
+            disableRF();
+            disableIR();
+        }
+
+        else if (type.equals("save_signal"))
+        {
+            String file_name = params["file"];
+            String signal = params["signal"];
+            if (signal.equals("IR"))
+                saveIR(file_name);
+            else
+                saveRF(file_name);
+        }
+
+        else if (type.equals("reset"))
+        {
+            settingsClear();
+        }
+
+        else if (type.equals("config"))
+        {
+            JsonObject params = obj["params"];
+            for (JsonPair kv : params)
+            {
+                ConfigData[kv.key()] = kv.value();
+            }
+            send_msg_doc["cmd"] = "return";
+            send_msg_doc["params"]["message"] = "set success";
+            returnUDP(&send_msg_doc);
+            settingsSave();
+            loadIRPin(ConfigData["pin"]["ir_send"], ConfigData["pin"]["ir_receive"]);
+        }
     }
     return true;
 }
