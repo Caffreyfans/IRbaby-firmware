@@ -10,8 +10,9 @@
 #include "defines.h"
 #include <LittleFS.h>
 #include "IRbabyRF.h"
+#include "IRbabyGlobal.h"
 
-void sendState(String file, t_remote_ac_status status);
+void returnACState(String file, t_remote_ac_status status);
 
 bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
 {
@@ -101,7 +102,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             {
                 String file = params["file"];
                 JsonObject statusJson = params[type];
-                t_remote_ac_status ac_status = getACState(file);
+                t_remote_ac_status ac_status;
                 ac_status.ac_power = t_ac_power((int)statusJson["power"]);
                 ac_status.ac_temp = t_ac_temperature((int)statusJson["temperature"]);
                 ac_status.ac_mode = t_ac_mode((int)statusJson["mode"]);
@@ -128,6 +129,8 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             {
                 String file = params["file"];
                 JsonObject localobj = params[type];
+                if (!ACStatus.containsKey(file))
+                    initAC(file);
                 t_remote_ac_status ac_status = getACState(file);
                 if (localobj.containsKey("mode")) {
                     String mode = localobj["mode"];
@@ -167,6 +170,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
                         ac_status.ac_swing = AC_SWING_OFF;
                 }
                 sendStatus(file, ac_status);
+                returnACState(file, ac_status);
             }
         }
         else if (signal.equalsIgnoreCase("rf315"))
@@ -240,35 +244,39 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
         }
 
         else if (type.equals("reset"))
-        {
             settingsClear();
-        }
 
         else if (type.equals("config"))
         {
             JsonObject params = obj["params"];
             for (JsonPair kv : params)
-            {
                 ConfigData[kv.key()] = kv.value();
-            }
             send_msg_doc["cmd"] = "return";
             send_msg_doc["params"]["message"] = "set success";
             returnUDP(&send_msg_doc);
             settingsSave();
+            mqttDisconnect();
+            mqttReconnect();
             loadIRPin(ConfigData["pin"]["ir_send"], ConfigData["pin"]["ir_receive"]);
         }
     }
     return true;
 }
 
-void sendState(String file_name, t_remote_ac_status status)
+void returnACState(String file_name, t_remote_ac_status status)
 {
     String chip_id = String(ESP.getChipId(), HEX);
     String topic_head = "/IRbaby/" + chip_id + "/state/" + file_name + "/";
-    String topic = topic_head + "mode";
     String payload;
-    const char *mode[5] = {"auto", "cool", "test", "a", "b"};
-    int index = (int)status.ac_mode;
-    DEBUGLN("mode is");
-    DEBUGLN(mode[index]);
+    const char *mode[] = {"auto", "cool", "test", "a", "b"};
+    const char *swing_mode[] = {"on", "off"};
+    const char *fan_mode[] = {"auto", "low", "medium", "high"};
+    const char *mode_state = mode[(int)status.ac_mode];
+    const char *swing_mode_state = swing_mode[(int)status.ac_swing];
+    const char *fan_mode_state = fan_mode[(int)status.ac_wind_speed];
+    int temperature_state = status.ac_temp + 16;
+    mqttPublish(topic_head + "mode", mode_state);
+    mqttPublish(topic_head + "swing", swing_mode_state);
+    mqttPublish(topic_head + "fan", fan_mode_state);
+    mqttPublish(topic_head + "temperature", String(temperature_state));
 }

@@ -2,7 +2,6 @@
 #define IREASY_MSG_HANDLE_H
 
 #include <ArduinoJson.h>
-#include "IRbabyGlobal.h"
 
 typedef enum msgtype
 {

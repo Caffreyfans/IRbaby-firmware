@@ -18,9 +18,6 @@ const uint8_t kTimeout = 50;
 const uint16_t kCaptureBufferSize = 1024;
 static IRsend * ir_send = nullptr;
 static IRrecv * ir_recv = nullptr;
-
-void initAC(String);
-
 bool saveSignal();
 
 void downLoadFile(String file)
@@ -123,13 +120,13 @@ void sendStatus(String file, t_remote_ac_status status)
                 ir_close();
                 free(user_data);
                 free(content);
+                saveACStatus(file, status);
             }
             else
                 ERRORF("Open %s is empty\n", save_path.c_str());
         }
         cache.close();
     }
-    saveACStatus(file, status);
 }
 
 void recvIR()
@@ -184,24 +181,6 @@ void initAC(String file)
     ACStatus[file]["mode"] = 2;
     ACStatus[file]["swing"] = 0;
     ACStatus[file]["speed"] = 0;
-}
-
-t_remote_ac_status getACState(String file)
-{
-    if (!ACStatus.containsKey(file))
-        initAC(file);
-    t_remote_ac_status status;
-    int power = ACStatus[file]["power"];
-    int temperature = ACStatus[file]["temperature"];
-    int mode = ACStatus[file]["mode"];
-    int swing = ACStatus[file]["swing"];
-    int wind_speed = ACStatus[file]["speed"];
-    status.ac_power = (t_ac_power)power;
-    status.ac_temp = (t_ac_temperature)temperature;
-    status.ac_mode = (t_ac_mode)mode;
-    status.ac_swing = (t_ac_swing)swing;
-    status.ac_wind_speed = (t_ac_wind_speed)wind_speed;
-    return status;
 }
 
 bool sendKey(String file_name, int key)
