@@ -36,10 +36,10 @@ bool mqttReconnect()
             chip_id.toUpperCase();
             DEBUGF("Trying to connect %s:%d\n", host, port);
             if (mqtt_client.connect(chip_id.c_str(), user,
-                password))
+                                    password))
             {
-                String sub_topic = String("/IRbaby/") + 
-                    chip_id + "/set" + String("/#");
+                String sub_topic = String("/IRbaby/") +
+                                   chip_id + String("/send/#");
                 DEBUGF("MQTT subscribe %s\n", sub_topic.c_str());
                 mqtt_client.subscribe(sub_topic.c_str());
                 flag = true;
@@ -59,13 +59,14 @@ void mqttDisconnect()
 void callback(char *topic, byte *payload, unsigned int length)
 {
     mqtt_msg_doc.clear();
+
     String payload_str = "";
     for (uint32_t i = 0; i < length; i++)
-    {
         payload_str += (char)payload[i];
-    }
     String topic_str(topic);
     uint8_t index = 0;
+    String option;
+    String func;
     do
     {
         int divsion = topic_str.lastIndexOf("/");
@@ -74,16 +75,25 @@ void callback(char *topic, byte *payload, unsigned int length)
         switch (index++)
         {
         case 0:
-            mqtt_msg_doc["cmd"] = tmp;
+            func = tmp;
             break;
         case 1:
             mqtt_msg_doc["params"]["file"] = tmp;
             break;
+        case 2:
+            mqtt_msg_doc["params"]["type"] = tmp;
+            option = tmp;
+            break;
+        case 3:
+            mqtt_msg_doc["params"]["signal"] = tmp;
+            break;
+        case 4:
+            mqtt_msg_doc["cmd"] = tmp;
         default:
             break;
         }
     } while (topic_str.lastIndexOf("/") > 0);
-    mqtt_msg_doc["params"]["status"] = payload_str;
+    mqtt_msg_doc["params"][option][func] = payload_str;
     msgHandle(&mqtt_msg_doc, MsgType::mqtt);
 }
 

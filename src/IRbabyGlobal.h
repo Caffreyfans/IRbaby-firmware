@@ -13,4 +13,12 @@ extern StaticJsonDocument<1024> mqtt_msg_doc;
 extern WiFiManager wifi_manager;
 extern WiFiClient wifi_client;
 
+extern uint8_t ir_send_pin;
+extern uint8_t ir_receive_pin;
+#ifdef USE_RF
+extern uint8_t rf315_send_pin;
+extern uint8_t rf315_receive_pin;
+extern uint8_t rf433_send_pin;
+extern uint8_t rf433_receive_pin;
+#endif
 #endif // IRBABY_GLOBAL_H

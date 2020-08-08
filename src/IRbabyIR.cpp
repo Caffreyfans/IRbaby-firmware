@@ -5,17 +5,19 @@
 #include "IRbabyUserSettings.h"
 #include <LittleFS.h>
 #include "IRbabyGlobal.h"
+#include "defines.h"
 
 #define DOWNLOAD_PREFIX "http://irext-debug.oss-cn-hangzhou.aliyuncs.com/irda_"
 #define DOWNLOAD_SUFFIX ".bin"
 #define SAVE_PATH "/bin/"
 
 decode_results results; // Somewhere to store the results
-IRsend *ir_send = NULL;
-IRrecv *ir_recv = NULL;
-
-void initAC(String);
-bool saveAC(String, t_remote_ac_status);
+const uint8_t kTimeout = 50;
+// As this program is a special purpose capture/decoder, let us use a larger
+// than normal buffer so we can handle Air Conditioner remote codes.
+const uint16_t kCaptureBufferSize = 1024;
+static IRsend * ir_send = nullptr;
+static IRrecv * ir_recv = nullptr;
 bool saveSignal();
 
 void downLoadFile(String file)
@@ -24,10 +26,20 @@ void downLoadFile(String file)
     String download_url = DOWNLOAD_PREFIX + file + DOWNLOAD_SUFFIX;
     String save_path = SAVE_PATH + file;
     File cache = LittleFS.open(save_path, "w");
+    bool download_flag = false;
     if (cache)
     {
         http_client.begin(wifi_client, download_url);
-        if (HTTP_CODE_OK == http_client.GET())
+        for (int i = 0; i < 5; i++)
+        {
+            if (http_client.GET() == HTTP_CODE_OK)
+            {
+                download_flag = true;
+                break;
+            }
+            delay(200);
+        }
+        if (download_flag)
         {
             http_client.writeToStream(&cache);
             DEBUGF("Download %s success\n", file.c_str());
@@ -35,7 +47,7 @@ void downLoadFile(String file)
         else
         {
             LittleFS.remove(save_path);
-            DEBUGF("Download %s failed\n", file.c_str());
+            ERRORF("Download %s failed\n", file.c_str());
         }
     }
     else
@@ -44,7 +56,7 @@ void downLoadFile(String file)
     http_client.end();
 }
 
-bool sendRaw(String file_name)
+bool sendIR(String file_name)
 {
     String save_path = SAVE_PATH + file_name;
     if (LittleFS.exists(save_path))
@@ -62,9 +74,6 @@ bool sendRaw(String file_name)
         INFOF("file size = %d\n", cache.size());
         INFOLN();
         cache.readBytes((char *)data_buffer, cache.size());
-        // for (size_t i = 0; i < length; i++)
-        //     Serial.printf("%d ", *(data_buffer + i));
-        // INFOLN();
         ir_recv->disableIRIn();
         ir_send->sendRaw(data_buffer, length, 38);
         ir_recv->enableIRIn();
@@ -111,36 +120,36 @@ void sendStatus(String file, t_remote_ac_status status)
                 ir_close();
                 free(user_data);
                 free(content);
+                saveACStatus(file, status);
             }
             else
                 ERRORF("Open %s is empty\n", save_path.c_str());
         }
         cache.close();
     }
-    saveAC(file, status);
 }
 
-void recvRaw()
+void recvIR()
 {
     if (ir_recv->decode(&results))
     {
         DEBUGF("raw length = %d\n", results.rawlen - 1);
         String raw_data;
-        raw_data += "raw length = ";
-        raw_data += String(results.rawlen - 1) + "\n";
         for (int i = 1; i < results.rawlen; i++)
             raw_data += String(*(results.rawbuf + i) * kRawTick) + " ";
         ir_recv->resume();
         send_msg_doc.clear();
         send_msg_doc["cmd"] = "record_rt";
-        send_msg_doc["params"] = raw_data.c_str();
+        send_msg_doc["params"]["signal"] = "IR";
+        send_msg_doc["params"]["length"] = results.rawlen;
+        send_msg_doc["params"]["value"] = raw_data.c_str();
         DEBUGLN(raw_data.c_str());
         sendUDP(&send_msg_doc, remote_ip);
         saveSignal();
     }
 }
 
-bool saveRaw(String file_name)
+bool saveIR(String file_name)
 {
     String save_path = SAVE_PATH;
     save_path += file_name;
@@ -164,6 +173,7 @@ bool saveSignal()
     cache.close();
     return true;
 }
+
 void initAC(String file)
 {
     ACStatus[file]["power"] = 0;
@@ -173,35 +183,70 @@ void initAC(String file)
     ACStatus[file]["speed"] = 0;
 }
 
-t_remote_ac_status getACState(String file)
+bool sendKey(String file_name, int key)
 {
-    if (!ACStatus.containsKey(file))
-        initAC(file);
-    t_remote_ac_status status;
-    int power = ACStatus[file]["power"];
-    int temperature = ACStatus[file]["temperature"];
-    int mode = ACStatus[file]["mode"];
-    int swing = ACStatus[file]["swing"];
-    int wind_speed = ACStatus[file]["speed"];
-    status.ac_power = (t_ac_power)power;
-    status.ac_temp = (t_ac_temperature)temperature;
-    status.ac_mode = (t_ac_mode)mode;
-    status.ac_swing = (t_ac_swing)swing;
-    status.ac_wind_speed = (t_ac_wind_speed)wind_speed;
-    return status;
+    String save_path = SAVE_PATH;
+    save_path += file_name;
+    if (LittleFS.exists(save_path))
+    {
+        File cache = LittleFS.open(save_path, "r");
+        if (cache)
+        {
+            UINT16 content_size = cache.size();
+            DEBUGF("content size = %d\n", content_size);
+
+            if (content_size != 0)
+            {
+                UINT8 *content = (UINT8 *)malloc(content_size * sizeof(UINT8));
+                cache.seek(0L, fs::SeekSet);
+                cache.readBytes((char *)content, content_size);
+                ir_binary_open(2, 1, content, content_size);
+                UINT16 *user_data = (UINT16 *)malloc(1024 * sizeof(UINT16));
+                UINT16 data_length = ir_decode(0, user_data, NULL, FALSE);
+
+                DEBUGF("data_length = %d\n", data_length);
+                if (LOG_DEBUG)
+                {
+                    for (int i = 0; i < data_length; i++)
+                        Serial.printf("%d ", *(user_data + i));
+                    Serial.println();
+                }
+                ir_recv->disableIRIn();
+                ir_send->sendRaw(user_data, data_length, 38);
+                ir_recv->enableIRIn();
+                ir_close();
+                free(user_data);
+                free(content);
+            }
+            else
+                ERRORF("Open %s is empty\n", save_path.c_str());
+        }
+        cache.close();
+    }
+    return true;
 }
 
-bool saveAC(String file, t_remote_ac_status status)
+void loadIRPin(uint8_t send_pin, uint8_t recv_pin)
 {
-    bool ret = false;
-    ACStatus[file]["power"] = status.ac_power;
-    ACStatus[file]["temperature"] = status.ac_temp;
-    ACStatus[file]["mode"] = status.ac_mode;
-    ACStatus[file]["swing"] = status.ac_swing;
-    ACStatus[file]["speed"] = status.ac_wind_speed;
-    File cache = LittleFS.open("/acstatus", "w");
-    if (cache && (serializeJson(ACStatus, cache) == 0))
-        ret = true;
-    cache.close();
-    return ret;
+    if (ir_send != nullptr) {
+        delete ir_send;
+    }
+    if (ir_recv != nullptr) {
+        delete ir_recv;
+    }
+    ir_send = new IRsend(send_pin);
+    DEBUGF("load send pin at %d\n", send_pin);
+    ir_send->begin();
+    ir_recv = new IRrecv(recv_pin, kCaptureBufferSize, kTimeout, true);
+    disableIR();
+}
+
+void disableIR()
+{
+    ir_recv->disableIRIn();
+}
+
+void enableIR()
+{
+    ir_recv->enableIRIn();
 }
