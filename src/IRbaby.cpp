@@ -62,7 +62,9 @@ void setup()
 
     udpInit();  // udp init
     mqttInit(); // mqtt init
+#ifdef USE_RF
     initRF();   // RF init
+#endif
     loadIRPin(ConfigData["pin"]["ir_send"], ConfigData["pin"]["ir_receive"]);;   // IR init
 #ifdef USE_INFO_UPLOAD
     registerDevice();
@@ -76,10 +78,10 @@ void loop()
 {
     /* IR receive */
     recvIR();
-
+#ifdef USE_RF
     /* RF receive */
     recvRF();
-
+#endif
     /* UDP receive and handle */
     char *msg = udpRecive();
     if (msg) {

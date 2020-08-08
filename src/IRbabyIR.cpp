@@ -256,6 +256,7 @@ void loadIRPin(uint8_t send_pin, uint8_t recv_pin)
         delete ir_recv;
     }
     ir_send = new IRsend(send_pin);
+    DEBUGF("load send pin at %d\n", send_pin);
     ir_send->begin();
     ir_recv = new IRrecv(recv_pin, kCaptureBufferSize, kTimeout, true);
     disableIR();

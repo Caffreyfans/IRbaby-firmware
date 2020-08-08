@@ -38,8 +38,8 @@ bool mqttReconnect()
             if (mqtt_client.connect(chip_id.c_str(), user,
                                     password))
             {
-                String sub_topic = String("/hasssmart/") +
-                                   chip_id + String("/#");
+                String sub_topic = String("/IRbaby/") +
+                                   chip_id + String("/send/#");
                 DEBUGF("MQTT subscribe %s\n", sub_topic.c_str());
                 mqtt_client.subscribe(sub_topic.c_str());
                 flag = true;
@@ -62,41 +62,38 @@ void callback(char *topic, byte *payload, unsigned int length)
 
     String payload_str = "";
     for (uint32_t i = 0; i < length; i++)
-    {
         payload_str += (char)payload[i];
-    }
-    DeserializationError error = deserializeJson(mqtt_msg_doc, payload_str);
-    if (error)
-        ERRORLN("Failed to parse udp message");
-    serializeJsonPretty(mqtt_msg_doc, Serial);
-    // String topic_str(topic);
-    // uint8_t index = 0;
-    // String option;
-    // do
-    // {
-    //     int divsion = topic_str.lastIndexOf("/");
-    //     String tmp = topic_str.substring(divsion + 1, -1);
-    //     topic_str = topic_str.substring(0, divsion);
-    //     switch (index++)
-    //     {
-    //     case 0:
-    //         mqtt_msg_doc["cmd"] = tmp;
-    //         break;
-    //     case 1:
-    //         mqtt_msg_doc["params"]["signal"] = tmp;
-    //         break;
-    //     case 2:
-    //         mqtt_msg_doc["params"]["type"] = tmp;
-    //         option = tmp;
-    //         break;
-    //     case 3:
-    //         mqtt_msg_doc["params"]["file"] = tmp;
-    //         break;
-    //     default:
-    //         break;
-    //     }
-    // } while (topic_str.lastIndexOf("/") > 0);
-    // mqtt_msg_doc["params"][option] = payload_str;
+    String topic_str(topic);
+    uint8_t index = 0;
+    String option;
+    String func;
+    do
+    {
+        int divsion = topic_str.lastIndexOf("/");
+        String tmp = topic_str.substring(divsion + 1, -1);
+        topic_str = topic_str.substring(0, divsion);
+        switch (index++)
+        {
+        case 0:
+            func = tmp;
+            break;
+        case 1:
+            mqtt_msg_doc["params"]["file"] = tmp;
+            break;
+        case 2:
+            mqtt_msg_doc["params"]["type"] = tmp;
+            option = tmp;
+            break;
+        case 3:
+            mqtt_msg_doc["params"]["signal"] = tmp;
+            break;
+        case 4:
+            mqtt_msg_doc["cmd"] = tmp;
+        default:
+            break;
+        }
+    } while (topic_str.lastIndexOf("/") > 0);
+    mqtt_msg_doc["params"][option][func] = payload_str;
     msgHandle(&mqtt_msg_doc, MsgType::mqtt);
 }
 

@@ -1,6 +1,7 @@
 #ifndef IRBABY_USER_SETTINGS_H
 #define IRBABY_USER_SETTINGS_H
 #include <ArduinoJson.h>
+#include "../lib/Irext/include/ir_ac_control.h"
 /* 保存配置信息 */
 bool settingsSave();
 

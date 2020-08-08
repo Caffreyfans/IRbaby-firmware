@@ -11,7 +11,7 @@
 #include <LittleFS.h>
 #include "IRbabyRF.h"
 
-void sendState(String file, t_remote_ac_status status);
+void returnACstatus(String filename, t_remote_ac_status ac_status);
 
 bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
 {
@@ -111,6 +111,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
                 ac_status.ac_timer = 0;
                 ac_status.ac_sleep = 0;
                 sendStatus(file, ac_status);
+                returnACstatus(file, ac_status);
             }
             else if (type.equalsIgnoreCase("file"))
             {
@@ -142,7 +143,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
                         ac_status.ac_mode = AC_MODE_HEAT;
                     else if (mode.equalsIgnoreCase("auto"))
                         ac_status.ac_mode = AC_MODE_AUTO;
-                    else if (mode.equalsIgnoreCase("fan"))
+                    else if (mode.equalsIgnoreCase("fan") || mode.equalsIgnoreCase("fan_only"))
                         ac_status.ac_mode = AC_MODE_FAN;
                     else if (mode.equalsIgnoreCase("dry"))
                         ac_status.ac_mode = AC_MODE_DRY;
@@ -167,8 +168,10 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
                         ac_status.ac_swing = AC_SWING_OFF;
                 }
                 sendStatus(file, ac_status);
+                returnACstatus(file, ac_status);
             }
         }
+#ifdef USE_RF
         else if (signal.equalsIgnoreCase("rf315"))
         {
             RFTYPE rf_type;
@@ -202,6 +205,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
                 sendRFFile(file);
             }
         }
+#endif
     }
 
     if (cmd.equalsIgnoreCase("set"))
@@ -247,9 +251,15 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
         else if (type.equals("config"))
         {
             JsonObject params = obj["params"];
-            for (JsonPair kv : params)
-            {
-                ConfigData[kv.key()] = kv.value();
+            if (params.containsKey("mqtt")) {
+                ConfigData["mqtt"]["host"] = params["mqtt"]["host"];
+                ConfigData["mqtt"]["port"] = params["mqtt"]["port"];
+                ConfigData["mqtt"]["user"] = params["mqtt"]["host"];
+                ConfigData["mqtt"]["password"] = params["mqtt"]["host"];
+            }
+            if (params.containsKey("pin")) {
+                ConfigData["pin"]["ir_send"] = params["pin"]["ir_send"];
+                ConfigData["pin"]["ir_receive"] = params["pin"]["ir_receive"];
             }
             send_msg_doc["cmd"] = "return";
             send_msg_doc["params"]["message"] = "set success";
@@ -261,14 +271,23 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
     return true;
 }
 
-void sendState(String file_name, t_remote_ac_status status)
+void returnACstatus(String filename, t_remote_ac_status ac_status)
 {
+    send_msg_doc.clear();
     String chip_id = String(ESP.getChipId(), HEX);
-    String topic_head = "/IRbaby/" + chip_id + "/state/" + file_name + "/";
-    String topic = topic_head + "mode";
-    String payload;
-    const char *mode[5] = {"auto", "cool", "test", "a", "b"};
-    int index = (int)status.ac_mode;
-    DEBUGLN("mode is");
-    DEBUGLN(mode[index]);
+    chip_id.toUpperCase();
+    String topic_head = "/IRbaby/" + chip_id + "/state/" + filename + "/";
+    const char* mode[] = {"cool", "heat", "auto", "fan_only", "dry"};
+    const char* fan[] = {"auto", "low", "medium", "high", "max"};
+    const char* swing[] = {"on","off"};
+    if (ac_status.ac_power == AC_POWER_OFF) {
+        mqttPublish(topic_head + "mode", "off");
+    } else {
+        mqttPublish(topic_head + "mode", mode[(int)ac_status.ac_mode]);
+    }
+    mqttPublish(topic_head + "temperature", String((int)ac_status.ac_temp + 16));
+    mqttPublish(topic_head + "fan", fan[(int)ac_status.ac_wind_speed]);
+    mqttPublish(topic_head + "swing", swing[(int)ac_status.ac_swing]);
+    mqttPublish(topic_head + "availability", "online");
+    
 }

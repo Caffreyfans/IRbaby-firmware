@@ -35,16 +35,15 @@ typedef unsigned char uint8_t;
 #define DISABLE_SIGNAL_INTERVALS 600 // seconds
 
 // uncomment below to enable RF
-#define USE_RF
+// #define USE_RF
 
 // uncomment below to enable upload board info to remote server
-#define USE_INFO_UPLOAD
+// #define USE_INFO_UPLOAD
 
 /* ----------------- default pin setting --------------- */
 /* reset pin */
 #define RESET_PIN 2
 
-#ifdef USE_RF
 /* 315 RF pin */
 #define T_315 5
 #define R_315 4
@@ -52,10 +51,9 @@ typedef unsigned char uint8_t;
 /* 433 RF pin */
 #define T_433 14
 #define R_433 12
-#endif
 
 /* IR pin */
-#define T_IR 15
-#define R_IR 13
+#define T_IR 14
+#define R_IR 12
 
 #endif  // _DEFINES_H
