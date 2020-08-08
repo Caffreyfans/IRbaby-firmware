@@ -12,6 +12,7 @@ void settingsClear();
 bool settingsLoad();
 
 bool saveACStatus(String, t_remote_ac_status);
+t_remote_ac_status getACState(String file);
 
 extern StaticJsonDocument<1024> ConfigData;
 extern StaticJsonDocument<1024> ACStatus;

@@ -14,5 +14,5 @@ bool sendKey(String file_name, int key);
 bool sendIR(String file_name);
 void recvIR();
 bool saveIR(String file_name);
-t_remote_ac_status getACState(String file);
+void initAC(String);
 #endif // IRBABAYIR_H

@@ -52,9 +52,6 @@ bool settingsSave()
         return false;
     }
     cache.close();
-    // loadPin();
-    mqttDisconnect();
-    mqttReconnect();
     return true;
 }
 
@@ -126,4 +123,20 @@ bool saveACStatus(String file, t_remote_ac_status status)
         ret = true;
     cache.close();
     return ret;
+}
+
+t_remote_ac_status getACState(String file)
+{
+    t_remote_ac_status status;
+    int power = ACStatus[file]["power"];
+    int temperature = ACStatus[file]["temperature"];
+    int mode = ACStatus[file]["mode"];
+    int swing = ACStatus[file]["swing"];
+    int wind_speed = ACStatus[file]["speed"];
+    status.ac_power = (t_ac_power)power;
+    status.ac_temp = (t_ac_temperature)temperature;
+    status.ac_mode = (t_ac_mode)mode;
+    status.ac_swing = (t_ac_swing)swing;
+    status.ac_wind_speed = (t_ac_wind_speed)wind_speed;
+    return status;
 }
