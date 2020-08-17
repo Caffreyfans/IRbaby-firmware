@@ -21,8 +21,6 @@ before_deploy:
   - cp ../.pio/build/esp8266-1m*/firmware.bin IRbaby1m.bin
   - cp ../.pio/build/esp8266-2m*/firmware.bin IRbaby2m.bin
   - cp ../.pio/build/esp8266-4m*/firmware.bin IRbaby4m.bin
-  - wget irbaby.caffreyfans.top/tools/FlashESP8266.exe
-  - wget irbaby.caffreyfans.top/tools/esptool.exe
   - zip -q IRbaby.zip *
 
 deploy:

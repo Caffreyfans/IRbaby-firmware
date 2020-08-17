@@ -33,7 +33,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
         {
             String chip_id = String(ESP.getChipId(), HEX);
             chip_id.toUpperCase();
-            send_msg_doc["cmd"] = "upload";
+            send_msg_doc["cmd"] = "query_discovery";
             send_msg_doc["params"]["ip"] = WiFi.localIP().toString();
             send_msg_doc["params"]["mac"] = chip_id;
 
@@ -42,15 +42,11 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
                 send_msg_doc["params"]["mqtt"] = ConfigData["mqtt"];
             }
 
-            if (ConfigData.containsKey("send_pin"))
+            if (ConfigData.containsKey("pin"))
             {
-                send_msg_doc["params"]["send_pin"] = ConfigData["send_pin"];
+                send_msg_doc["params"]["pin"]= ConfigData["pin"];
             }
 
-            if (ConfigData.containsKey("receive_pin"))
-            {
-                send_msg_doc["params"]["receive_pin"] = ConfigData["receive_pin"];
-            }
             if (ConfigData.containsKey("version"))
             {
                 send_msg_doc["params"]["version"] = ConfigData["version"];
