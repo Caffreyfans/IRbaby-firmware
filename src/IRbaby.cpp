@@ -34,7 +34,7 @@
 #include "IRbabyUserSettings.h"
 #include "IRbabyRF.h"
 
-void registerDevice();              // device info upload to devicehive
+void uploadIP();              // device info upload to devicehive
 void ICACHE_RAM_ATTR resetHandle(); // interrupt handle
 Ticker mqtt_check;                  // MQTT check timer
 Ticker disable_ir;                  // disable IR receive
@@ -47,15 +47,17 @@ void setup()
     pinMode(RESET_PIN, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(RESET_PIN), resetHandle, ONLOW);
     INFOLN();
-    INFOLN(
-        " ___________ _           _           \n"
-        "|_   _| ___ \\ |         | |          \n"
-        "  | | | |_/ / |__   __ _| |__  _   _ \n"
-        "  | | |    /| '_ \\ / _` | '_ \\| | | |\n"
-        " _| |_| |\\ \\| |_) | (_| | |_) | |_| |\n"
-        " \\___/\\_| \\_|_.__/ \\__,_|_.__/ \\__, |\n"
-        "                                __/ |\n"
-        "                               |___/ \n");
+    INFOLN("8888888 8888888b.  888               888               ");
+    INFOLN("  888   888   Y88b 888               888               ");
+    INFOLN("  888   888    888 888               888               ");
+    INFOLN("  888   888   d88P 88888b.   8888b.  88888b.  888  888 ");
+    INFOLN("  888   8888888P   888  88b      88b 888  88b 888  888 ");
+    INFOLN("  888   888 T88b   888  888 .d888888 888  888 888  888 ");
+    INFOLN("  888   888  T88b  888 d88P 888  888 888 d88P Y88b 888 ");
+    INFOLN("8888888 888   T88b 88888P    Y888888 88888P     Y88888 ");
+    INFOLN("                                              Y8b d88P ");
+    INFOLN("                                                 Y88P  ");
+
     wifi_manager.autoConnect();
 
     settingsLoad();  // load user settings form fs
@@ -67,7 +69,7 @@ void setup()
 #endif
     loadIRPin(ConfigData["pin"]["ir_send"], ConfigData["pin"]["ir_receive"]);;   // IR init
 #ifdef USE_INFO_UPLOAD
-    registerDevice();
+    uploadIP();
 #endif
     mqtt_check.attach_scheduled(MQTT_CHECK_INTERVALS, mqttCheck);
     disable_ir.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableIR);
@@ -110,31 +112,22 @@ void resetHandle()
         settingsClear();
 }
 
-void registerDevice()
+// only upload chip id
+void uploadIP()
 {
     HTTPClient http;
-    String head = "http://api.ipify.org/?format=json";
-    http.begin(wifi_client, head);
-    http.GET();
-    String ip = http.getString();
-    StaticJsonDocument<128> ip_json;
-    deserializeJson(ip_json, ip);
-    JsonObject ip_obj = ip_json.as<JsonObject>();
-    http.end();
-    HTTPClient http2;
     StaticJsonDocument<128> body_json;
     String chip_id = String(ESP.getChipId(), HEX);
     chip_id.toUpperCase();
-    head = "http://playground.devicehive.com/api/rest/device/";
+    String head = "http://playground.devicehive.com/api/rest/device/";
     head += chip_id;
-    http2.begin(wifi_client, head);
-    http2.addHeader("Content-Type", "application/json");
-    http2.addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJwYXlsb2FkIjp7ImEiOlsyLDMsNCw1LDYsNyw4LDksMTAsMTEsMTIsMTUsMTYsMTddLCJlIjoxNzQzNDM2ODAwMDAwLCJ0IjoxLCJ1Ijo2NjM1LCJuIjpbIjY1NDIiXSwiZHQiOlsiKiJdfX0.WyyxNr2OD5pvBSxMq84NZh6TkNnFZe_PXenkrUkRSiw");
+    http.begin(wifi_client, head);
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJwYXlsb2FkIjp7ImEiOlsyLDMsNCw1LDYsNyw4LDksMTAsMTEsMTIsMTUsMTYsMTddLCJlIjoxNzQzNDM2ODAwMDAwLCJ0IjoxLCJ1Ijo2NjM1LCJuIjpbIjY1NDIiXSwiZHQiOlsiKiJdfX0.WyyxNr2OD5pvBSxMq84NZh6TkNnFZe_PXenkrUkRSiw");
     body_json["name"] = chip_id;
     body_json["networkId"] = "6542";
-    body_json["data"] = ip_obj;
     String body = body_json.as<String>();
     INFOF("update %s to devicehive\n", body.c_str());
-    http2.PUT(body);
-    http2.end();
+    http.PUT(body);
+    http.end();
 }

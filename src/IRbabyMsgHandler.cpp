@@ -71,7 +71,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             LittleFS.info(fsinfo);
             String fs_total_bytes = String(fsinfo.totalBytes / 1024) + "KB";
             String fs_used_bytes = String(fsinfo.usedBytes / 1024) + "KB";
-            send_msg_doc["cmd"] = "info_rt";
+            send_msg_doc["cmd"] = "query_info";
             send_msg_doc["params"]["free_mem"] = free_mem;
             send_msg_doc["params"]["chip_id"] = chip_id;
             send_msg_doc["params"]["cpu_freq"] = cpu_freq;
@@ -251,8 +251,8 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             if (params.containsKey("mqtt")) {
                 ConfigData["mqtt"]["host"] = params["mqtt"]["host"];
                 ConfigData["mqtt"]["port"] = params["mqtt"]["port"];
-                ConfigData["mqtt"]["user"] = params["mqtt"]["host"];
-                ConfigData["mqtt"]["password"] = params["mqtt"]["host"];
+                ConfigData["mqtt"]["user"] = params["mqtt"]["user"];
+                ConfigData["mqtt"]["password"] = params["mqtt"]["password"];
             }
             if (params.containsKey("pin")) {
                 ConfigData["pin"]["ir_send"] = params["pin"]["ir_send"];
