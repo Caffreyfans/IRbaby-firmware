@@ -11,8 +11,8 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 typedef unsigned char uint8_t;
 
-#define FIRMWARE_VERSION "v0.6" // version name
-#define VERSION_CODE 6          // version code
+#define FIRMWARE_VERSION "v0.7" // version name
+#define VERSION_CODE 7          // version code
 
 /* log settings */
 #define BAUD_RATE 115200
@@ -28,7 +28,7 @@ typedef unsigned char uint8_t;
 
 /* ----------------- user settings ----------------- */
 /* mqtt settings */
-#define MQTT_CHECK_INTERVALS 10      // seconds
+#define MQTT_CHECK_INTERVALS 15      // seconds
 #define MQTT_CONNECT_WAIT_TIME 20000 // MQTT 连接等待时间
 
 /* receive disable */
@@ -37,7 +37,7 @@ typedef unsigned char uint8_t;
 // uncomment below to enable RF
 // #define USE_RF
 
-// uncomment below to enable upload board info to remote server
+// uncomment below to enable upload chip id to remote server
 // #define USE_INFO_UPLOAD
 
 /* ----------------- default pin setting --------------- */
