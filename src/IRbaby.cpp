@@ -34,12 +34,12 @@
 #include "IRbabyUserSettings.h"
 #include "IRbabyRF.h"
 
-void uploadIP();              // device info upload to devicehive
+void uploadIP();                    // device info upload to devicehive
 void ICACHE_RAM_ATTR resetHandle(); // interrupt handle
 Ticker mqtt_check;                  // MQTT check timer
 Ticker disable_ir;                  // disable IR receive
 Ticker disable_rf;                  // disable RF receive
-
+Ticker save_data;                   // save data     
 void setup()
 {
     if (LOG_DEBUG || LOG_ERROR || LOG_INFO)
@@ -61,7 +61,7 @@ void setup()
     wifi_manager.autoConnect();
 
     settingsLoad();  // load user settings form fs
-
+    delay(5);
     udpInit();  // udp init
     mqttInit(); // mqtt init
 #ifdef USE_RF
@@ -74,6 +74,7 @@ void setup()
     mqtt_check.attach_scheduled(MQTT_CHECK_INTERVALS, mqttCheck);
     disable_ir.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableIR);
     disable_rf.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableRF);
+    save_data.attach_scheduled(SAVE_DATA_INTERVALS, settingsSave);
 }
 
 void loop()

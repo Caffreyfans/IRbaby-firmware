@@ -19,6 +19,9 @@ void mqttLoop();
 /* MQTT 信息发送 */
 void mqttPublish(String topic, String payload);
 
+/* MQTT 信息发送 */
+void mqttPublishRetained(String topic, String payload);
+
 /* MQTT 连接检查 */
 void mqttCheck();
 #endif // IRBABY_MQTT_H

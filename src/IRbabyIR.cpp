@@ -108,12 +108,12 @@ void sendStatus(String file, t_remote_ac_status status)
                 UINT16 data_length = ir_decode(0, user_data, &status, FALSE);
 
                 DEBUGF("data_length = %d\n", data_length);
-                if (LOG_DEBUG)
-                {
-                    for (int i = 0; i < data_length; i++)
-                        Serial.printf("%d ", *(user_data + i));
-                    Serial.println();
-                }
+                // if (LOG_DEBUG)
+                // {
+                //     for (int i = 0; i < data_length; i++)
+                //         Serial.printf("%d ", *(user_data + i));
+                //     Serial.println();
+                // }
                 ir_recv->disableIRIn();
                 ir_send->sendRaw(user_data, data_length, 38);
                 ir_recv->enableIRIn();

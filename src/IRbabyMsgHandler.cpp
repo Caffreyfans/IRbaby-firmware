@@ -11,8 +11,7 @@
 #include <LittleFS.h>
 #include "IRbabyRF.h"
 #include "IRbabyGlobal.h"
-
-void returnACStatus(String filename, t_remote_ac_status ac_status);
+#include "IRbabyha.h"
 
 bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
 {
@@ -126,8 +125,9 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             {
                 String file = params["file"];
                 JsonObject localobj = params[type];
-                if (!ACStatus.containsKey(file))
+                if (!ACStatus.containsKey(file)) {
                     initAC(file);
+                }
                 t_remote_ac_status ac_status = getACState(file);
                 if (localobj.containsKey("mode")) {
                     String mode = localobj["mode"];
@@ -210,14 +210,12 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
     if (cmd.equalsIgnoreCase("set"))
     {
         String type = params["type"];
-        if (type.equals("update"))
-        {
+        if (type.equals("update")) {
             String url = params["url"];
             otaUpdate(url);
         }
 
-        else if (type.equals("record"))
-        {
+        else if (type.equals("record")) {
             String ip = params["ip"];
             remote_ip.fromString(ip);
             DEBUGLN("start record");
@@ -225,15 +223,13 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             enableRF();
         }
 
-        else if (type.equals("disable_record"))
-        {
+        else if (type.equals("disable_record")) {
             DEBUGLN("disable record");
             disableRF();
             disableIR();
         }
 
-        else if (type.equals("save_signal"))
-        {
+        else if (type.equals("save_signal")) {
             String file_name = params["file"];
             String signal = params["signal"];
             if (signal.equals("IR"))
@@ -245,9 +241,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
         else if (type.equals("reset"))
             settingsClear();
 
-        else if (type.equals("config"))
-        {
-            JsonObject params = obj["params"];
+        else if (type.equals("config")) {
             if (params.containsKey("mqtt")) {
                 ConfigData["mqtt"]["host"] = params["mqtt"]["host"];
                 ConfigData["mqtt"]["port"] = params["mqtt"]["port"];
@@ -266,26 +260,15 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
             mqttReconnect();
             loadIRPin(ConfigData["pin"]["ir_send"], ConfigData["pin"]["ir_receive"]);
         }
+
+        else if (type.equals("device")) {
+            DEBUGLN("Register Device")
+            String file = params["file"];
+            int device_type = (int)params["device_type"];
+            bool exist = params["exist"];
+            if (device_type == 1)
+                registAC(file, exist);
+        }
     }
     return true;
-}
-
-void returnACStatus(String filename, t_remote_ac_status ac_status)
-{
-    send_msg_doc.clear();
-    String chip_id = String(ESP.getChipId(), HEX);
-    chip_id.toUpperCase();
-    String topic_head = "/IRbaby/" + chip_id + "/state/" + filename + "/";
-    const char* mode[] = {"cool", "heat", "auto", "fan_only", "dry"};
-    const char* fan[] = {"auto", "low", "medium", "high", "max"};
-    const char* swing[] = {"on","off"};
-    if (ac_status.ac_power == AC_POWER_OFF) {
-        mqttPublish(topic_head + "mode", "off");
-    } else {
-        mqttPublish(topic_head + "mode", mode[(int)ac_status.ac_mode]);
-    }
-    mqttPublish(topic_head + "temperature", String((int)ac_status.ac_temp + 16));
-    mqttPublish(topic_head + "fan", fan[(int)ac_status.ac_wind_speed]);
-    mqttPublish(topic_head + "swing", swing[(int)ac_status.ac_swing]);
-    
 }

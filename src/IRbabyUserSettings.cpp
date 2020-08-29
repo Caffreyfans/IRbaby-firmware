@@ -38,18 +38,19 @@ StaticJsonDocument<1024> ACStatus;
 bool settingsSave()
 {
     DEBUGLN("Save Config");
-    serializeJsonPretty(ConfigData, Serial);
     File cache = LittleFS.open("/config", "w");
-    if (!cache)
-    {
-        ERRORLN("ERROR: Failed to create file");
+    if (!cache || (serializeJson(ConfigData, cache) == 0)) {
+        ERRORLN("Failed to save config file");
+        cache.close();
         return false;
     }
-
-    if (serializeJson(ConfigData, cache) == 0)
+    cache.close();
+    cache = LittleFS.open("/acstatus", "w");
+    if (!cache || (serializeJson(ACStatus, cache) == 0))
     {
-        ERRORLN("ERROR: Failed to write to file");
-        return false;
+        ERRORLN("ERROR: Failed to save acstatus file");
+        cache.close();
+        return false;        
     }
     cache.close();
     return true;
@@ -58,7 +59,6 @@ bool settingsSave()
 bool settingsLoad()
 {
     LittleFS.begin();
-
     int ret = false;
     if (LittleFS.exists("/config"))
     {
@@ -82,6 +82,8 @@ bool settingsLoad()
             Serial.println();
         }
         cache.close();
+    } else {
+        DEBUGLN("Don't exsit config");
     }
 
     if (LittleFS.exists("/acstatus")) {
@@ -113,26 +115,22 @@ void settingsClear()
 bool saveACStatus(String file, t_remote_ac_status status)
 {
     bool ret = false;
-    ACStatus[file]["power"] = status.ac_power;
-    ACStatus[file]["temperature"] = status.ac_temp;
-    ACStatus[file]["mode"] = status.ac_mode;
-    ACStatus[file]["swing"] = status.ac_swing;
-    ACStatus[file]["speed"] = status.ac_wind_speed;
-    File cache = LittleFS.open("/acstatus", "w");
-    if (cache && (serializeJson(ACStatus, cache) == 0))
-        ret = true;
-    cache.close();
+    ACStatus[file]["power"] = (int)status.ac_power;
+    ACStatus[file]["temperature"] = (int)status.ac_temp;
+    ACStatus[file]["mode"] = (int)status.ac_mode;
+    ACStatus[file]["swing"] = (int)status.ac_swing;
+    ACStatus[file]["speed"] = (int)status.ac_wind_speed;
     return ret;
 }
 
 t_remote_ac_status getACState(String file)
 {
     t_remote_ac_status status;
-    int power = ACStatus[file]["power"];
-    int temperature = ACStatus[file]["temperature"];
-    int mode = ACStatus[file]["mode"];
-    int swing = ACStatus[file]["swing"];
-    int wind_speed = ACStatus[file]["speed"];
+    int power = (int)ACStatus[file]["power"];
+    int temperature = (int)ACStatus[file]["temperature"];
+    int mode = (int)ACStatus[file]["mode"];
+    int swing = (int)ACStatus[file]["swing"];
+    int wind_speed = (int)ACStatus[file]["speed"];
     status.ac_power = (t_ac_power)power;
     status.ac_temp = (t_ac_temperature)temperature;
     status.ac_mode = (t_ac_mode)mode;

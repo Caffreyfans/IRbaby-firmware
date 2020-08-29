@@ -11,8 +11,8 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 typedef unsigned char uint8_t;
 
-#define FIRMWARE_VERSION "v0.7" // version name
-#define VERSION_CODE 7          // version code
+#define FIRMWARE_VERSION "v0.8" // version name
+#define VERSION_CODE 8          // version code
 
 /* log settings */
 #define BAUD_RATE 115200
@@ -34,6 +34,7 @@ typedef unsigned char uint8_t;
 /* receive disable */
 #define DISABLE_SIGNAL_INTERVALS 600 // seconds
 
+#define SAVE_DATA_INTERVALS 300 // seconds
 // uncomment below to enable RF
 // #define USE_RF
 

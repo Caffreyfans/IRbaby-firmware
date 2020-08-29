@@ -112,6 +112,11 @@ void mqttPublish(String topic, String payload)
     mqtt_client.publish(topic.c_str(), payload.c_str());
 }
 
+void mqttPublishRetained(String topic, String payload)
+{
+    mqtt_client.publish(topic.c_str(), payload.c_str(), true);
+}
+
 void mqttCheck()
 {
     if (!mqttConnected())
