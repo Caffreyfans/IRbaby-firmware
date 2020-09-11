@@ -98,7 +98,11 @@ bool settingsLoad()
                 ERRORLN("Failed to load acstatus settings");
                 return ret;
             }
+            INFOLN("Load ACStatus data:");
+            serializeJsonPretty(ACStatus, Serial);
+            Serial.println();
         }
+        cache.close();
     }
     ret = true;
     return ret;
