@@ -62,7 +62,10 @@ void registAC(String filename, bool flag)
         send_msg_doc["fan_mode_state_topic"] = state_head_topic + "fan";
         send_msg_doc["swing_mode_command_topic"] = cmd_head_topic + "swing";
         send_msg_doc["swing_mode_state_topic"] = state_head_topic + "swing";
-        send_msg_doc["precision"] = 1;
+        // 添加温度传感器温度值（受限于StaticJsonDocument长度改用其他方式写入）
+        // send_msg_doc["current_temperature_topic"] = "/IRbaby/" + chip_id + "/state/temp";
+        // send_msg_doc["current_temperature_template"] = "{{ value_json['SI7021'].Temperature }}";
+        send_msg_doc["precision"] = 0.1;
         send_msg_doc["unique_id"] = "IRbaby-" + chip_id + "_climate_" + filename;
 
         JsonObject device = send_msg_doc.createNestedObject("device");
@@ -75,6 +78,13 @@ void registAC(String filename, bool flag)
     }
 
     serializeJson(send_msg_doc, reg_content);
+    
+    //用字符串方式添加温度传感器topic
+    reg_content.remove(reg_content.length()-1,1);
+    reg_content += ",\"current_temperature_topic\":\"/IRbaby/" + chip_id + "/state/temp\"}";
+    
     //发布注册信息
+	DEBUGLN(reg_topic_head);
+	DEBUGLN(reg_content);
     mqttPublishRetained(reg_topic_head, reg_content);
 }
