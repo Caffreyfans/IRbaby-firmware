@@ -9,32 +9,6 @@
 StaticJsonDocument<1024> ConfigData;
 StaticJsonDocument<1024> ACStatus;
 
-// void loadPin()
-// {
-// if (ConfigData.containsKey("send_pin")) {
-//     int pin = ConfigData["send_pin"];
-//     if (pin > 0) {
-//         if (ir_send != NULL)
-//             delete ir_send;
-//         ir_send = new IRsend(pin);
-//         ir_send->begin();
-//         INFOF("Init gpio %d as IR send pin\n", pin);
-//     }
-// }
-// if (ConfigData.containsKey("receive_pin")) {
-//     int pin = ConfigData["receive_pin"];
-//     if (pin > 0) {
-//         if (ir_recv != NULL)
-//             delete ir_recv;
-//         const uint8_t kTimeout = 50;
-//         const uint16_t kCaptureBufferSize = 1024;
-//         ir_recv = new IRrecv(pin, kCaptureBufferSize, kTimeout, true);
-// ir_recv->enableIRIn();
-//         INFOF("Init gpio %d as IR receive pin\n", pin);
-//     }
-// }
-// }
-
 bool settingsSave()
 {
     DEBUGLN("Save Config");
@@ -99,6 +73,7 @@ bool settingsLoad()
                 return ret;
             }
         }
+        cache.close();
     }
     ret = true;
     return ret;

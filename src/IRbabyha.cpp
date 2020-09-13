@@ -62,7 +62,7 @@ void registAC(String filename, bool flag)
         send_msg_doc["fan_mode_state_topic"] = state_head_topic + "fan";
         send_msg_doc["swing_mode_command_topic"] = cmd_head_topic + "swing";
         send_msg_doc["swing_mode_state_topic"] = state_head_topic + "swing";
-        send_msg_doc["precision"] = 1;
+        send_msg_doc["precision"] = 0.1;
         send_msg_doc["unique_id"] = "IRbaby-" + chip_id + "_climate_" + filename;
 
         JsonObject device = send_msg_doc.createNestedObject("device");
@@ -73,8 +73,8 @@ void registAC(String filename, bool flag)
         device["model"] = "ESP8266";
         device["sw_version"] = "IRbaby " + String(FIRMWARE_VERSION);
     }
-
     serializeJson(send_msg_doc, reg_content);
-    //发布注册信息
+    DEBUGLN(reg_topic_head);
+    DEBUGLN(reg_content);
     mqttPublishRetained(reg_topic_head, reg_content);
 }
