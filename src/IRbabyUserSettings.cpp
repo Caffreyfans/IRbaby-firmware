@@ -9,32 +9,6 @@
 StaticJsonDocument<1024> ConfigData;
 StaticJsonDocument<1024> ACStatus;
 
-// void loadPin()
-// {
-// if (ConfigData.containsKey("send_pin")) {
-//     int pin = ConfigData["send_pin"];
-//     if (pin > 0) {
-//         if (ir_send != NULL)
-//             delete ir_send;
-//         ir_send = new IRsend(pin);
-//         ir_send->begin();
-//         INFOF("Init gpio %d as IR send pin\n", pin);
-//     }
-// }
-// if (ConfigData.containsKey("receive_pin")) {
-//     int pin = ConfigData["receive_pin"];
-//     if (pin > 0) {
-//         if (ir_recv != NULL)
-//             delete ir_recv;
-//         const uint8_t kTimeout = 50;
-//         const uint16_t kCaptureBufferSize = 1024;
-//         ir_recv = new IRrecv(pin, kCaptureBufferSize, kTimeout, true);
-// ir_recv->enableIRIn();
-//         INFOF("Init gpio %d as IR receive pin\n", pin);
-//     }
-// }
-// }
-
 bool settingsSave()
 {
     DEBUGLN("Save Config");
@@ -99,6 +73,7 @@ bool settingsLoad()
                 return ret;
             }
         }
+        cache.close();
     }
     ret = true;
     return ret;
@@ -120,12 +95,6 @@ bool saveACStatus(String file, t_remote_ac_status status)
     ACStatus[file]["mode"] = (int)status.ac_mode;
     ACStatus[file]["swing"] = (int)status.ac_swing;
     ACStatus[file]["speed"] = (int)status.ac_wind_speed;
-    DEBUGLN("Save");
-    DEBUGF("power = %d\n", (int)ACStatus[file]["power"]);
-    DEBUGF("temperature = %d\n", (int)ACStatus[file]["temperature"]);
-    DEBUGF("mode = %d\n", (int)ACStatus[file]["mode"]);
-    DEBUGF("swing = %d\n", (int)ACStatus[file]["swing"]);
-    DEBUGF("speed = %d\n", (int)ACStatus[file]["speed"]);
     return ret;
 }
 
@@ -142,11 +111,5 @@ t_remote_ac_status getACState(String file)
     status.ac_mode = (t_ac_mode)mode;
     status.ac_swing = (t_ac_swing)swing;
     status.ac_wind_speed = (t_ac_wind_speed)wind_speed;
-    DEBUGLN("Get");
-    DEBUGF("power = %d\n", status.ac_power);
-    DEBUGF("temperature = %d\n", status.ac_temp);
-    DEBUGF("mode = %d\n", status.ac_mode);
-    DEBUGF("swing = %d\n", status.ac_swing);
-    DEBUGF("speed = %d\n", status.ac_wind_speed);
     return status;
 }
