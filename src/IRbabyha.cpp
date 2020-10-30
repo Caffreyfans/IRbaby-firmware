@@ -73,8 +73,9 @@ void registAC(String filename, bool flag)
         device["model"] = "ESP8266";
         device["sw_version"] = "IRbaby " + String(FIRMWARE_VERSION);
     }
-    serializeJson(send_msg_doc, reg_content);
+    if (flag) {
+        serializeJson(send_msg_doc, reg_content);
+    }
     DEBUGLN(reg_topic_head);
-    DEBUGLN(reg_content);
     mqttPublishRetained(reg_topic_head, reg_content);
 }
