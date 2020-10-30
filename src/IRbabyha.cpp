@@ -76,5 +76,9 @@ void registAC(String filename, bool flag)
 
     serializeJson(send_msg_doc, reg_content);
     //发布注册信息
-    mqttPublishRetained(reg_topic_head, reg_content);
+    if (flag)
+        mqttPublishRetained(reg_topic_head, reg_content);
+    else
+        mqttPublishRetained(reg_topic_head, "");
+    
 }

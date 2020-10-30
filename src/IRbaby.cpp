@@ -45,6 +45,10 @@ void setup()
     if (LOG_DEBUG || LOG_ERROR || LOG_INFO)
         Serial.begin(BAUD_RATE);
     pinMode(RESET_PIN, INPUT_PULLUP);
+    pinMode(0, OUTPUT);
+    digitalWrite(0, LOW);
+    pinMode(2, OUTPUT);
+    digitalWrite(0, LOW);
     attachInterrupt(digitalPinToInterrupt(RESET_PIN), resetHandle, ONLOW);
     INFOLN();
     INFOLN("8888888 8888888b.  888               888               ");

@@ -120,6 +120,12 @@ bool saveACStatus(String file, t_remote_ac_status status)
     ACStatus[file]["mode"] = (int)status.ac_mode;
     ACStatus[file]["swing"] = (int)status.ac_swing;
     ACStatus[file]["speed"] = (int)status.ac_wind_speed;
+    DEBUGLN("Save");
+    DEBUGF("power = %d\n", (int)ACStatus[file]["power"]);
+    DEBUGF("temperature = %d\n", (int)ACStatus[file]["temperature"]);
+    DEBUGF("mode = %d\n", (int)ACStatus[file]["mode"]);
+    DEBUGF("swing = %d\n", (int)ACStatus[file]["swing"]);
+    DEBUGF("speed = %d\n", (int)ACStatus[file]["speed"]);
     return ret;
 }
 
@@ -136,5 +142,11 @@ t_remote_ac_status getACState(String file)
     status.ac_mode = (t_ac_mode)mode;
     status.ac_swing = (t_ac_swing)swing;
     status.ac_wind_speed = (t_ac_wind_speed)wind_speed;
+    DEBUGLN("Get");
+    DEBUGF("power = %d\n", status.ac_power);
+    DEBUGF("temperature = %d\n", status.ac_temp);
+    DEBUGF("mode = %d\n", status.ac_mode);
+    DEBUGF("swing = %d\n", status.ac_swing);
+    DEBUGF("speed = %d\n", status.ac_wind_speed);
     return status;
 }
