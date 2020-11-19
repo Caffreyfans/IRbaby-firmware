@@ -34,6 +34,9 @@ bool settingsLoad()
 {
     LittleFS.begin();
     int ret = false;
+    FSInfo64 info;
+    LittleFS.info64(info);
+    DEBUGF("fs total bytes = %lu\n", info.totalBytes);
     if (LittleFS.exists("/config"))
     {
         File cache = LittleFS.open("/config", "r");
