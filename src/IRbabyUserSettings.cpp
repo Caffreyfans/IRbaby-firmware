@@ -36,7 +36,7 @@ bool settingsLoad()
     int ret = false;
     FSInfo64 info;
     LittleFS.info64(info);
-    DEBUGF("fs total bytes = %lu\n", info.totalBytes);
+    DEBUGF("fs total bytes = %llu\n", info.totalBytes);
     if (LittleFS.exists("/config"))
     {
         File cache = LittleFS.open("/config", "r");
@@ -84,8 +84,7 @@ bool settingsLoad()
 
 void settingsClear()
 {
-    DEBUGLN("\nReset settings");
-    wifi_manager.resetSettings();
+    ESP.eraseConfig();
     LittleFS.format();
     ESP.reset();
 }
@@ -115,4 +114,11 @@ t_remote_ac_status getACState(String file)
     status.ac_swing = (t_ac_swing)swing;
     status.ac_wind_speed = (t_ac_wind_speed)wind_speed;
     return status;
+}
+
+void clearBinFiles() {
+    Dir root = LittleFS.openDir(BIN_SAVE_PATH);
+    while (root.next()) {
+        LittleFS.remove(BIN_SAVE_PATH + root.fileName());
+    }
 }

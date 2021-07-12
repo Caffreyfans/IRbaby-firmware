@@ -1,6 +1,9 @@
-// IRbaby - github.com/Caffreyfans/IRbaby
-// Copyright Miao Yi 2019-2020
-// MIT License
+/*
+ * @Author: Caffreyfans
+ * @Date: 2021-07-06 20:59:02
+ * @LastEditTime: 2021-07-12 21:19:16
+ * @Description: 
+ */ 
 
 #ifndef _DEFINES_H
 #define _DEFINES_H
@@ -11,8 +14,8 @@ typedef unsigned short uint16_t;
 typedef short int16_t;
 typedef unsigned char uint8_t;
 
-#define FIRMWARE_VERSION "v0.9" // version name
-#define VERSION_CODE 9          // version code
+#define FIRMWARE_VERSION "v1.0" // version name
+#define VERSION_CODE 10          // version code
 
 /* log settings */
 #define BAUD_RATE 115200
@@ -43,8 +46,8 @@ typedef unsigned char uint8_t;
 
 /* ----------------- default pin setting --------------- */
 /* reset pin */
-#define RESET_PIN 2
-
+#define RESET_PIN 0
+#define LED_PIN   2
 /* 315 RF pin */
 #define T_315 5
 #define R_315 4

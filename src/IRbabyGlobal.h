@@ -1,9 +1,16 @@
+/*
+ * @Author: Caffreyfans
+ * @Date: 2021-07-06 20:59:02
+ * @LastEditTime: 2021-07-12 21:21:37
+ * @Description: 
+ */
 #ifndef IRBABY_GLOBAL_H
 #define IRBABY_GLOBAL_H
 
 #include <ArduinoJson.h>
 #include <WiFiManager.h>
 #include <WiFiClient.h>
+#include "jled.h"
 /* goable json variable */
 extern StaticJsonDocument<1024> recv_msg_doc;
 extern StaticJsonDocument<1024> send_msg_doc;
@@ -21,4 +28,5 @@ extern uint8_t rf315_receive_pin;
 extern uint8_t rf433_send_pin;
 extern uint8_t rf433_receive_pin;
 #endif
+extern JLed led;
 #endif // IRBABY_GLOBAL_H

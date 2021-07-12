@@ -33,13 +33,15 @@
 #include "IRbabyGlobal.h"
 #include "IRbabyUserSettings.h"
 #include "IRbabyRF.h"
-
+#include "OneButton.h"
 void uploadIP();                    // device info upload to devicehive
-void ICACHE_RAM_ATTR resetHandle(); // interrupt handle
 Ticker mqtt_check;                  // MQTT check timer
 Ticker disable_ir;                  // disable IR receive
 Ticker disable_rf;                  // disable RF receive
 Ticker save_data;                   // save data     
+
+OneButton button(RESET_PIN, true);
+
 void setup()
 {
     if (LOG_DEBUG || LOG_ERROR || LOG_INFO)
@@ -47,7 +49,6 @@ void setup()
     pinMode(RESET_PIN, INPUT_PULLUP);
     pinMode(0, OUTPUT);
     digitalWrite(0, LOW);
-    attachInterrupt(digitalPinToInterrupt(RESET_PIN), resetHandle, ONLOW);
     INFOLN();
     INFOLN("8888888 8888888b.  888               888               ");
     INFOLN("  888   888   Y88b 888               888               ");
@@ -60,7 +61,9 @@ void setup()
     INFOLN("                                              Y8b d88P ");
     INFOLN("                                                 Y88P  ");
 
+    led.Off();
     wifi_manager.autoConnect();
+    led.On();
 
     settingsLoad();  // load user settings form fs
     delay(5);
@@ -77,6 +80,13 @@ void setup()
     disable_ir.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableIR);
     disable_rf.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableRF);
     save_data.attach_scheduled(SAVE_DATA_INTERVALS, settingsSave);
+
+    button.setPressTicks(3000);
+    button.attachLongPressStart([](){
+        settingsClear();
+    });
+
+    led.Blink(200, 200).Repeat(10);
 }
 
 void loop()
@@ -100,19 +110,6 @@ void loop()
     /* mqtt loop */
     mqttLoop();
     yield();
-}
-
-void resetHandle()
-{
-    static unsigned long last_interrupt_time = millis();
-    unsigned long interrupt_time = millis();
-    static unsigned long start_time = millis();
-    unsigned long end_time = millis();
-    if (interrupt_time - last_interrupt_time > 10)
-        start_time = millis();
-    last_interrupt_time = interrupt_time;
-    if (end_time - start_time > 3000)
-        settingsClear();
 }
 
 // only upload chip id

@@ -22,38 +22,24 @@ bool saveSignal();
 
 void downLoadFile(String file)
 {
-    HTTPClient http_client;
-    String download_url = DOWNLOAD_PREFIX + file + DOWNLOAD_SUFFIX;
-    String save_path = SAVE_PATH + file;
-    File cache = LittleFS.open(save_path, "w");
-    bool download_flag = false;
-    if (cache)
-    {
-        http_client.begin(wifi_client, download_url);
-        for (int i = 0; i < 5; i++)
-        {
-            if (http_client.GET() == HTTP_CODE_OK)
-            {
-                download_flag = true;
-                break;
-            }
-            delay(200);
-        }
-        if (download_flag)
-        {
-            http_client.writeToStream(&cache);
-            DEBUGF("Download %s success\n", file.c_str());
-        }
-        else
-        {
-            LittleFS.remove(save_path);
-            ERRORF("Download %s failed\n", file.c_str());
-        }
+  HTTPClient http_client;
+  String download_url = DOWNLOAD_PREFIX + file + DOWNLOAD_SUFFIX;
+  String save_path = BIN_SAVE_PATH + file;
+  File cache = LittleFS.open(save_path, "w");
+  if (cache) {
+    http_client.begin(wifi_client, download_url);
+    if (http_client.GET() == HTTP_CODE_OK) {
+        WiFiClient &wificlient = http_client.getStream();
+        uint8_t buff[512];
+        int n = wificlient.readBytes(buff, http_client.getSize());
+        cache.write(buff, n);
+        cache.flush();
     }
-    else
-        ERRORLN("Don't have enough file zoom");
-    cache.close();
-    http_client.end();
+  } else {
+      clearBinFiles();
+  }
+  cache.close();
+  http_client.end();
 }
 
 bool sendIR(String file_name)
@@ -108,12 +94,6 @@ void sendStatus(String file, t_remote_ac_status status)
                 UINT16 data_length = ir_decode(0, user_data, &status, FALSE);
 
                 DEBUGF("data_length = %d\n", data_length);
-                // if (LOG_DEBUG)
-                // {
-                //     for (int i = 0; i < data_length; i++)
-                //         Serial.printf("%d ", *(user_data + i));
-                //     Serial.println();
-                // }
                 ir_recv->disableIRIn();
                 ir_send->sendRaw(user_data, data_length, 38);
                 ir_recv->enableIRIn();
