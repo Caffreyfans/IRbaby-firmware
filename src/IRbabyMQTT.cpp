@@ -124,8 +124,12 @@ void mqttCheck()
         DEBUGLN("MQTT disconnect, try to reconnect");
         mqtt_client.disconnect();
         mqttReconnect();
+#ifdef USE_LED
         led.Blink(500, 500);
+#endif // USE_LED
     } else {
+#ifdef USE_LED
         led.On();
+#endif // USE_LED
     }
 }

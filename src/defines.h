@@ -1,7 +1,7 @@
 /*
  * @Author: Caffreyfans
  * @Date: 2021-07-06 20:59:02
- * @LastEditTime: 2021-07-12 21:19:16
+ * @LastEditTime: 2021-07-12 23:47:26
  * @Description: 
  */ 
 
@@ -38,12 +38,17 @@ typedef unsigned char uint8_t;
 #define DISABLE_SIGNAL_INTERVALS 600 // seconds
 
 #define SAVE_DATA_INTERVALS 300 // seconds
+
 // uncomment below to enable RF
 // #define USE_RF
 
 // uncomment below to enable upload chip id to remote server
-// #define USE_INFO_UPLOAD
+#define USE_INFO_UPLOAD
 
+// uncomment below to enable binary sensor
+#ifdef USE_SENSOR
+#define SENSOR_UPLOAD_INTERVAL      10  // seconds
+#endif // USE_SENSOR
 /* ----------------- default pin setting --------------- */
 /* reset pin */
 #define RESET_PIN 0
@@ -60,4 +65,6 @@ typedef unsigned char uint8_t;
 #define T_IR 14
 #define R_IR 12
 
+/* Sensor Pin*/
+#define SENSOR_PIN 0
 #endif  // _DEFINES_H

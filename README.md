@@ -7,7 +7,7 @@
 ## Feature
 - [x] OTA
 - [x] MQTT
-- [x] UDP
-- [x] IRext
 - [x] IRsend
 - [x] IRreceive
+- [x] LED
+- [x] KEY

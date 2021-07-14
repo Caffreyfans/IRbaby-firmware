@@ -1,7 +1,7 @@
 /*
  * @Author: Caffreyfans
  * @Date: 2021-07-06 20:59:02
- * @LastEditTime: 2021-07-12 21:19:01
+ * @LastEditTime: 2021-07-12 23:05:04
  * @Description: 
  */
 #include "IRbabyGlobal.h"
@@ -24,5 +24,6 @@ uint8_t rf315_receive_pin = R_315;
 uint8_t rf433_send_pin = T_433;
 uint8_t rf433_receive_pin = R_433;
 #endif
-
+#ifdef USE_LED
 JLed led = JLed(LED_PIN);
+#endif // USE_LED
