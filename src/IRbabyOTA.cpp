@@ -1,7 +1,13 @@
 #include "IRbabyOTA.h"
+#ifdef ESP8266
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <HTTPClient.h>
+#include <HTTPUpdate.h>
+#include <WiFi.h>
+#endif
 
 void update_started()
 {
@@ -32,6 +38,7 @@ void otaUpdate(String url)
 
     WiFiClient client;
     // Add optional callback notifiers
+#ifdef ESP8266
     ESPhttpUpdate.onStart(update_started);
     ESPhttpUpdate.onEnd(update_finished);
     ESPhttpUpdate.onProgress(update_progress);
@@ -53,4 +60,27 @@ void otaUpdate(String url)
         DEBUGLN("HTTP_UPDATE_OK");
         break;
     }
+#elif defined(ESP32)
+    httpUpdate.onStart(update_started);
+    httpUpdate.onEnd(update_finished);
+    httpUpdate.onProgress(update_progress);
+    httpUpdate.onError(update_error);
+
+    HTTPUpdateResult ret = httpUpdate.update(client, url);
+
+    switch (ret)
+    {
+    case HTTP_UPDATE_FAILED:
+        DEBUGF("HTTP_UPDATE_FAILD Error (%d): %s\n", httpUpdate.getLastError(), httpUpdate.getLastErrorString().c_str());
+        break;
+
+    case HTTP_UPDATE_NO_UPDATES:
+        DEBUGLN("HTTP_UPDATE_NO_UPDATES");
+        break;
+
+    case HTTP_UPDATE_OK:
+        DEBUGLN("HTTP_UPDATE_OK");
+        break;
+    }
+#endif
 }

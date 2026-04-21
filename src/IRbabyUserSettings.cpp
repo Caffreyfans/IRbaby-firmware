@@ -6,6 +6,9 @@
 #include "IRbabyIR.h"
 #include "defines.h"
 #include <LittleFS.h>
+#ifdef ESP32
+#include <WiFi.h>
+#endif
 StaticJsonDocument<1024> ConfigData;
 StaticJsonDocument<1024> ACStatus;
 
@@ -50,9 +53,15 @@ bool settingsLoad()
 {
     LittleFS.begin();
     int ret = false;
+#ifdef ESP8266
     FSInfo64 info;
     LittleFS.info64(info);
     DEBUGF("fs total bytes = %llu\n", info.totalBytes);
+#elif defined(ESP32)
+    FSInfo info;
+    LittleFS.info(info);
+    DEBUGF("fs total bytes = %u\n", info.totalBytes);
+#endif
     if (LittleFS.exists("/config"))
     {
         File cache = LittleFS.open("/config", "r");
@@ -101,9 +110,13 @@ bool settingsLoad()
 
 void settingsClear()
 {
+#ifdef ESP8266
     ESP.eraseConfig();
+#elif defined(ESP32)
+    WiFi.disconnect(true, true);
+#endif
     LittleFS.format();
-    ESP.reset();
+    ESP.restart();
 }
 
 bool saveACStatus(String file, t_remote_ac_status status)
@@ -136,8 +149,22 @@ t_remote_ac_status getACState(String file)
 }
 
 void clearBinFiles() {
+#ifdef ESP8266
     Dir root = LittleFS.openDir(BIN_SAVE_PATH);
     while (root.next()) {
         LittleFS.remove(BIN_SAVE_PATH + root.fileName());
     }
+#elif defined(ESP32)
+    File root = LittleFS.open(BIN_SAVE_PATH);
+    if (root && root.isDirectory()) {
+        File file = root.openNextFile();
+        while (file) {
+            String filePath = file.path();
+            file.close();
+            LittleFS.remove(filePath);
+            file = root.openNextFile();
+        }
+    }
+    root.close();
+#endif
 }

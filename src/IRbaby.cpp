@@ -22,7 +22,11 @@
  */
 
 #include <Arduino.h>
+#ifdef ESP8266
 #include <ESP8266HTTPClient.h>
+#elif defined(ESP32)
+#include <HTTPClient.h>
+#endif
 #include <Ticker.h>
 
 #include "IRbabyGlobal.h"
@@ -85,14 +89,14 @@ void setup() {
   uploadIP();
 #endif
 
-  mqtt_check.attach_scheduled(MQTT_CHECK_INTERVALS, mqttCheck);
-  disable_ir.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableIR);
-  disable_rf.attach_scheduled(DISABLE_SIGNAL_INTERVALS, disableRF);
-  save_data.attach_scheduled(SAVE_DATA_INTERVALS, settingsSave);
+  mqtt_check.attach(MQTT_CHECK_INTERVALS, mqttCheck);
+  disable_ir.attach(DISABLE_SIGNAL_INTERVALS, disableIR);
+  disable_rf.attach(DISABLE_SIGNAL_INTERVALS, disableRF);
+  save_data.attach(SAVE_DATA_INTERVALS, settingsSave);
 
 #ifdef USE_SENSOR
   binary_sensor_init();
-  sensor_ticker.attach_scheduled(SENSOR_UPLOAD_INTERVAL, binary_sensor_loop);
+  sensor_ticker.attach(SENSOR_UPLOAD_INTERVAL, binary_sensor_loop);
 #endif  // USE_SENSOR
 
   button.setPressMs(3000);
@@ -127,7 +131,7 @@ void loop() {
 void uploadIP() {
   HTTPClient http;
   StaticJsonDocument<128> body_json;
-  String chip_id = String(ESP.getChipId(), HEX);
+  String chip_id = String(getChipId(), HEX);
   chip_id.toUpperCase();
   String head = "http://playground.devicehive.com/api/rest/device/";
   head += chip_id;

@@ -13,7 +13,7 @@ void binary_sensor_init() { pinMode(SENSOR_PIN, INPUT_PULLUP); }
 
 void binary_sensor_loop() {
   if (mqttConnected()) {
-    String chip_id = String(ESP.getChipId(), HEX);
+    String chip_id = String(getChipId(), HEX);
     chip_id.toUpperCase();
     int value = digitalRead(SENSOR_PIN);
     String message = value == HIGH ? "on" : "off";

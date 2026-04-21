@@ -8,11 +8,7 @@
 #ifndef _DEFINES_H
 #define _DEFINES_H
 
-typedef unsigned int uint32_t;
-typedef int int32_t;
-typedef unsigned short uint16_t;
-typedef short int16_t;
-typedef unsigned char uint8_t;
+#include <stdint.h>
 
 #define FIRMWARE_VERSION "v1.1" // version name
 #define VERSION_CODE 11          // version code
@@ -67,4 +63,21 @@ typedef unsigned char uint8_t;
 
 /* Sensor Pin*/
 #define SENSOR_PIN 0
+
+/* Platform-independent chip ID helper */
+#ifdef ESP32
+// Derive a 32-bit chip ID from the lower 4 bytes of the 48-bit eFuse MAC address
+inline uint32_t getChipId() {
+    uint32_t chipId = 0;
+    for (int i = 0; i < 32; i = i + 8) {
+        chipId |= ((ESP.getEfuseMac() >> (32 - i)) & 0xff) << i;
+    }
+    return chipId;
+}
+#else
+inline uint32_t getChipId() {
+    return ESP.getChipId();
+}
+#endif
+
 #endif  // _DEFINES_H

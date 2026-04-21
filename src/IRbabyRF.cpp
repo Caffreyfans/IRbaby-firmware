@@ -161,5 +161,5 @@ void initRF(void)
     rf_record = false;
     rf315.enableTransmit(T_315);
     rf433.enableTransmit(T_433);
-    change_rf_ticker.attach_ms_scheduled(100, changeReceiver);
+    change_rf_ticker.attach_ms(100, changeReceiver);
 }

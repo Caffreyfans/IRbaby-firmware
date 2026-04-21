@@ -1,5 +1,9 @@
 #include <WiFiUdp.h>
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
 #include "IRbabyUDP.h"
 #include "IRbabySerial.h"
 

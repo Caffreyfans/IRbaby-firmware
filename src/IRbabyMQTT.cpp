@@ -32,7 +32,7 @@ bool mqttReconnect()
         if (host && host[0] != '\0' && port > 0)
         {
             mqtt_client.setServer(host, port);
-            String chip_id = String(ESP.getChipId(), HEX);
+            String chip_id = String(getChipId(), HEX);
             chip_id.toUpperCase();
             DEBUGF("Trying to connect %s:%d\n", host, port);
             if (mqtt_client.connect(chip_id.c_str(), user,
