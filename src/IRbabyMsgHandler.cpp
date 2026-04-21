@@ -3,7 +3,12 @@
 #include "IRbabyUserSettings.h"
 #include "IRbabyMQTT.h"
 #include "IRbabyUDP.h"
+#ifdef ESP8266
 #include "ESP8266WiFi.h"
+#elif defined(ESP32)
+#include "WiFi.h"
+#include <esp_system.h>
+#endif
 #include "IRbabyIR.h"
 #include "../lib/Irext/include/ir_ac_control.h"
 #include "IRbabyOTA.h"
@@ -30,7 +35,7 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
         String type = params["type"];
         if (type.equals("discovery"))
         {
-            String chip_id = String(ESP.getChipId(), HEX);
+            String chip_id = String(getChipId(), HEX);
             chip_id.toUpperCase();
             send_msg_doc["cmd"] = "query_discovery";
             send_msg_doc["params"]["ip"] = WiFi.localIP().toString();
@@ -58,13 +63,18 @@ bool msgHandle(StaticJsonDocument<1024> *p_recv_msg_doc, MsgType msg_type)
         else if (type.equals("info"))
         {
             String free_mem = String(ESP.getFreeHeap() / 1024) + "KB";
-            String chip_id = String(ESP.getChipId(), HEX);
+            String chip_id = String(getChipId(), HEX);
             chip_id.toUpperCase();
             String cpu_freq = String(ESP.getCpuFreqMHz()) + "MHz";
+#ifdef ESP8266
             String flash_speed = String(ESP.getFlashChipSpeed() / 1000000);
+            String reset_reason = ESP.getResetReason();
+#elif defined(ESP32)
+            String flash_speed = "N/A";
+            String reset_reason = String(esp_reset_reason());
+#endif
             String flash_size = String(ESP.getFlashChipSize() / 1024) + "KB";
             String sketch_size = String(ESP.getSketchSize() / 1024) + "KB";
-            String reset_reason = ESP.getResetReason();
             String sketch_space = String(ESP.getFreeSketchSpace() / 1024) + "KB";
             FSInfo fsinfo;
             LittleFS.info(fsinfo);

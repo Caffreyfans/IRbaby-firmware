@@ -1,5 +1,9 @@
 #include "IRbabyIR.h"
+#ifdef ESP8266
 #include "ESP8266HTTPClient.h"
+#elif defined(ESP32)
+#include "HTTPClient.h"
+#endif
 #include "IRbabySerial.h"
 #include "IRbabyUDP.h"
 #include "IRbabyUserSettings.h"

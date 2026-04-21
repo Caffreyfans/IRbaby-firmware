@@ -6,7 +6,7 @@
 void returnACStatus(String filename, t_remote_ac_status ac_status)
 {
     send_msg_doc.clear();
-    String chip_id = String(ESP.getChipId(), HEX);
+    String chip_id = String(getChipId(), HEX);
     chip_id.toUpperCase();
     String topic_head = "/IRbaby/" + chip_id + "/state/" + filename + "/";
     const char* mode[] = {"cool", "heat", "auto", "fan_only", "dry"};
@@ -25,7 +25,7 @@ void returnACStatus(String filename, t_remote_ac_status ac_status)
 void registAC(String filename, bool flag)
 {
     send_msg_doc.clear();
-    String chip_id = String(ESP.getChipId(), HEX);
+    String chip_id = String(getChipId(), HEX);
     chip_id.toUpperCase();
     String reg_topic_head = "homeassistant/climate/IRbaby-"+ chip_id + "_climate_" + filename +"/config";
     String reg_content;
@@ -70,7 +70,11 @@ void registAC(String filename, bool flag)
         device_identifiers.add("IRbaby-" + chip_id);
         device["name"] = "IRbaby-" + chip_id;
         device["manufacturer"] = "espressif";
+#ifdef ESP32
+        device["model"] = "ESP32";
+#else
         device["model"] = "ESP8266";
+#endif
         device["sw_version"] = "IRbaby " + String(FIRMWARE_VERSION);
     }
     if (flag) {
